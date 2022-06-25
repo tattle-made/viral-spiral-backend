@@ -45,7 +45,7 @@ class Game(Model):
         for player_name in players:
             color = color_objs[0]
             colors = color_objs[1:] + [color_objs[0]]
-            player = Player.create(name=player_name, color=color)
+            player = Player.create(name=player_name, color=color, game=game)
         return game
 
 
