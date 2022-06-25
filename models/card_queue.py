@@ -29,12 +29,7 @@ class PlayerCardQueue(InGameModel):
         """Adds a card instance to given player's card queue"""
         # TODO atomic
         query = (
-            cls.select()
-            .where(cls.player == player)
-            .where(cls.active == True)
-            .order_by(cls.idx)
-            .desc()
-            .limit(1)
+            cls.select().where(cls.player == player).order_by(cls.idx).desc().limit(1)
         )
         if query.count() == 1:
             idx = query.first().idx + 1
