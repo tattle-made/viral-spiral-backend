@@ -22,7 +22,7 @@ class Player(InGameModel):
     """A player in the game"""
 
     name = peewee.CharField()
-    score = peewee.IntegerField()
+    score = peewee.IntegerField(default=0)
     color = peewee.ForeignKeyField(Color)
     initial_bias = peewee.ForeignKeyField(
         PlayerInitialBias, backref="player", unique=True
@@ -40,6 +40,8 @@ class Player(InGameModel):
             if card_instance.card.bias_against == against:
                 if card_instance.status == card_instance.STATUS_PASSED:
                     count += 1
+        if self.initial_bias and self.initial_bias.against == against:
+            count += self.initial_bias.count
         return count
 
     def affinity(self, towards: AffinityTopic) -> int:
@@ -51,6 +53,8 @@ class Player(InGameModel):
             if card_instance.card.affinity_towards == towards:
                 if card_instance.status == card_instance.STATUS_PASSED:
                     count += card_instance.card.affinity_count
+        if self.initial_affinity and self.initial_affinity.towards == towards:
+            count += self.initial_affinity.count
         return count
 
     def event_receive_card(self, card_instance):

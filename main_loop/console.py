@@ -3,6 +3,8 @@
 from typing import Callable
 from models import Game, Player, CardInstance
 
+from deck_generators.first import draw
+
 
 class GameRunner:
     def __init__(self, game: Game, draw_fn: Callable):
@@ -34,3 +36,14 @@ class GameRunner:
                 self.do_round(player)
                 self.game.rounds += 1
                 self.game.save()
+
+
+if __name__ == "__main__":
+    game = Game.new(
+        name="helloworld",
+        players=["rishav", "denny"],
+        colors=["red", "blue"],
+        topics=["cats", "stocks"],
+    )
+    gr = GameRunner(game=game, draw_fn=draw)
+    gr.loop()
