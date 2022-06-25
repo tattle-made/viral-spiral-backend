@@ -19,6 +19,11 @@ class Game(Model):
     """A game instance"""
 
     name = peewee.CharField(unique=True)
+    rounds = peewee.IntegerField(default=0)
+
+    def active(self):
+        # TODO implement this
+        return self.rounds <= 5
 
 
 class InGameModel(Model):
