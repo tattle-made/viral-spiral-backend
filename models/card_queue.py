@@ -17,7 +17,7 @@ class PlayerCardQueue(InGameModel):
     card_instance = peewee.ForeignKeyField(CardInstance, backref="card_queue_items")
     active = peewee.BooleanField(default=True)
 
-    class Meta(InGameModel.Meta):
+    class Meta:
         # Unique together
         indexes = (
             (("idx", "player_id"), True),

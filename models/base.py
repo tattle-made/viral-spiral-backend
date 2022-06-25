@@ -6,7 +6,7 @@ import peewee
 db = peewee.SqliteDatabase("game.db")
 
 
-class Model(peewee.Model, ABC):
+class Model(peewee.Model):
     """Base model with automatic UUIDs"""
 
     id_ = peewee.UUIDField(primary_key=True, default=uuid.uuid4)

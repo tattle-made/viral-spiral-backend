@@ -72,7 +72,7 @@ class CardInstance(InGameModel):
         Player, null=False, unique=False, backref="card_instances"
     )
 
-    class Meta(InGameModel.Meta):
+    class Meta:
         # Unique together
         indexes = ((("card_id", "player_id"), True),)
 

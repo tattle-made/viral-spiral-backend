@@ -15,6 +15,6 @@ class PlayerPower(InGameModel):
     name = peewee.CharField()
     player = peewee.ForeignKeyField(Player, backref="powers", unique=False)
 
-    class Meta(InGameModel.Meta):
+    class Meta:
         # Unique together
         indexes = ((("name", "player_id"), True),)
