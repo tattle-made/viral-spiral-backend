@@ -29,13 +29,13 @@ thread_lock = Lock()
 
 
 class WebsocketGameRunner(GameRunner):
-    
+
     background_tasks = {}
     max_games = 3  # Allow maximum of 3 games to run in parallel
 
-    def __init__(self, *args, room: str=None, **kwargs):
+    def __init__(self, *args, name: str = None, **kwargs):
         self.socket_loop_count = 0
-        self.room = room
+        self.name = name
         self.tread = thread
         super().__init__(*args, **kwargs)
 
@@ -47,7 +47,7 @@ class WebsocketGameRunner(GameRunner):
         emit(
             "text_response",
             {"data": "Finished a round", "count": self.socket_loop_count},
-            to=self.room,
+            to=self.name,
         )
 
     def loop_async(self):
@@ -59,6 +59,7 @@ class WebsocketGameRunner(GameRunner):
     def exit(self):
         self.thread.join()
         self.background_tasks.pop(self.name)
+        close_room(self.name)
 
     @classmethod
     def create_thread(cls, *args, **kwargs):
@@ -68,8 +69,14 @@ class WebsocketGameRunner(GameRunner):
         runner.loop_async()
 
     @classmethod
-    def create(cls, name: str, players: list[str], colors: list[str], topics:
-               list[str], draw_fn_name: str):
+    def create(
+        cls,
+        name: str,
+        players: list[str],
+        colors: list[str],
+        topics: list[str],
+        draw_fn_name: str,
+    ):
         game = Game.new(
             name=name,
             players=players,
@@ -78,13 +85,14 @@ class WebsocketGameRunner(GameRunner):
         )
         draw_fn = GENERATORS.get(draw_fn_name)
         assert draw_fn
-        cls.create_thread(game=game, draw_fn=draw_fn)
+        cls.create_thread(name=name, game=game, draw_fn=draw_fn)
 
     @classmethod
     def get_by_name(cls, name):
         runner = cls.background_tasks.get(name)
         if runner:
             return runner
+
 
 def background_thread():
     """Main Loop. Just sends an alive signal."""
@@ -112,12 +120,34 @@ def index():
 #         {"data": "In rooms: " + ", ".join(rooms()), "count": session["receive_count"]},
 #     )
 
+
 def join_game(message):
     """Takes a player name and game room name. Joins the game. The game needs
     to be created with another API"""
     game_name = message["game"]
     player_name = message["player"]
     runner = WebsocketGameRunner.get_by_name(game_name)
+    if runner:
+        join_room(game_name)
+        emit("text_response", {"data": "Joined game {game_name}"})
+    else:
+        emit("text_response", {"data": "Room not found"})
+
+
+def create_game(message):
+    """Creates a game"""
+    game_name = message["game"]
+    players = message["players"].split(",")
+    colors = message["colors"].split(",")
+    topics = message["topics"].split(",")
+    draw_fn_name = message["draw_fn_name"]
+    WebsocketGameRunner.create(
+        name=game_name,
+        players=players,
+        colors=colors,
+        topics=topics,
+        draw_fn_name=draw_fn_name,
+    )
 
 
 # @socketio.event
@@ -130,34 +160,42 @@ def join_game(message):
 #     )
 
 
+# @socketio.event
+# def my_rooms(message):
+#     emit(
+#         "text_response",
+#     )
+
+
+# @socketio.on("close_room")
+# def on_close_room(message):
+#     session["receive_count"] = session.get("receive_count", 0) + 1
+#     emit(
+#         "text_response",
+#         {
+#             "data": "Room " + message["room"] + " is closing.",
+#             "count": session["receive_count"],
+#         },
+#         to=message["room"],
+#     )
+#     close_room(message["room"])
+
+
 @socketio.event
-def my_rooms(message):
-    emit(
-        "text_response",
-    )
-
-
-@socketio.on("close_room")
-def on_close_room(message):
+def game_action(message):
     session["receive_count"] = session.get("receive_count", 0) + 1
-    emit(
-        "text_response",
-        {
-            "data": "Room " + message["room"] + " is closing.",
-            "count": session["receive_count"],
-        },
-        to=message["room"],
-    )
-    close_room(message["room"])
-
-
-@socketio.event
-def room_event(message):
-    session["receive_count"] = session.get("receive_count", 0) + 1
+    game_name = message["room"]
+    runner = WebsocketGameRunner.get_by_name(game_name)
+    if runner:
+        emit(
+            "text_response",
+            {"data": message["data"], "count": session["receive_count"]},
+            to=request.sid,
+        )
     emit(
         "text_response",
         {"data": message["data"], "count": session["receive_count"]},
-        to=message["room"],
+        to=request.sid,
     )
 
 
