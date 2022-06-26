@@ -47,6 +47,13 @@ class Game(Model):
             colors = color_objs[1:] + [color_objs[0]]
             player = Player.create(name=player_name, color=color, game=game)
         return game
+    
+    @classmethod
+    def get_by_name(cls, name):
+        """Loads a game object by name and returns it. Raises an exception if
+        not found"""
+
+        return cls.select().where(cls.name==name)
 
 
 class InGameModel(Model):
