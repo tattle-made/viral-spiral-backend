@@ -10,9 +10,10 @@ def draw(player: Player):
 
     card = (
         Card.select()
+        .where(Card.game == player.game)
         .where(Card.original_player == None)
         .order_by(peewee.fn.Random())
         .limit(1)
         .first()
     )
-    return card.draw()
+    return card.draw(player)

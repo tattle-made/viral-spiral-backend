@@ -10,14 +10,14 @@ class Card(InGameModel):
 
     title = peewee.CharField()
     description = peewee.TextField()
-    affinity_towards = peewee.ForeignKeyField(AffinityTopic)
-    affinity_count = peewee.IntegerField()  # Can be +1 or -1
+    affinity_towards = peewee.ForeignKeyField(AffinityTopic, null=True)
+    affinity_count = peewee.IntegerField(null=True)  # Can be +1 or -1
 
-    bias_against = peewee.ForeignKeyField(Color)
+    bias_against = peewee.ForeignKeyField(Color, null=True)
 
     bias_history = peewee.ManyToManyField(Color)
 
-    original_player = peewee.ForeignKeyField(Player)
+    original_player = peewee.ForeignKeyField(Player, null=True)
 
     # # IntegerField to denote whether this card is the currently active card in
     # # a round or not. If this is 0, it means it is the active card
@@ -41,12 +41,12 @@ class Card(InGameModel):
     def draw(self, player: Player):
         """Creates and returns a card instance. Does not affect the player
         score"""
-        card_instance = CardInstance(
+        card_instance = CardInstance.create(
             card=self,
             from_=None,
             player=player,
+            game=self.game,
         )
-        card_instance.save()
         self.original_player = player
         self.save()
         player.event_receive_card(card_instance)
@@ -74,7 +74,7 @@ class CardInstance(InGameModel):
 
     class Meta:
         # Unique together
-        indexes = ((("card_id", "player_id"), True),)
+        indexes = ((("card_id", "player_id", "game_id"), True),)
 
     @property
     def status(self):

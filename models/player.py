@@ -25,10 +25,10 @@ class Player(InGameModel):
     score = peewee.IntegerField(default=0)
     color = peewee.ForeignKeyField(Color)
     initial_bias = peewee.ForeignKeyField(
-        PlayerInitialBias, backref="player", unique=True
+        PlayerInitialBias, backref="player", unique=True, null=True
     )
     initial_affinity = peewee.ForeignKeyField(
-        PlayerInitialAffinity, backref="player", unique=True
+        PlayerInitialAffinity, backref="player", unique=True, null=True
     )
 
     def bias(self, against: Color) -> int:

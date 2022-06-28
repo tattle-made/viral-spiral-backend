@@ -20,8 +20,8 @@ class PlayerCardQueue(InGameModel):
     class Meta:
         # Unique together
         indexes = (
-            (("idx", "player_id"), True),
-            (("card_instance_id", "player_id"), True),
+            (("idx", "player_id", "game_id"), True),
+            (("card_instance_id", "player_id", "game_id"), True),
         )
 
     @classmethod
@@ -29,14 +29,15 @@ class PlayerCardQueue(InGameModel):
         """Adds a card instance to given player's card queue"""
         # TODO atomic
         query = (
-            cls.select().where(cls.player == player).order_by(cls.idx).desc().limit(1)
+            cls.select().where(cls.player == player).order_by(cls.idx.desc()).limit(1)
         )
         if query.count() == 1:
             idx = query.first().idx + 1
         else:
             idx = 0
-        saved = cls(idx=idx, player=player, card_instance=card_instance)
-        saved.save()
+        saved = cls.create(
+            idx=idx, player=player, game=player.game, card_instance=card_instance
+        )
         return saved
 
     @classmethod

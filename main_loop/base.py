@@ -1,5 +1,6 @@
 """Abstract class for main loop"""
 
+import time
 from abc import ABC, abstractmethod
 from typing import Callable
 from models import Game, Player, CardInstance
@@ -9,8 +10,11 @@ class GameRunner(ABC):
     def __init__(self, game: Game, draw_fn: Callable):
         self.game = game
         self.name = game.name
-        self.players = Player.select().where(Player.game == game).all()
         self.draw_fn = draw_fn
+
+    @property
+    def players(self):
+        return Player.select().where(Player.game == self.game)
 
     def invoke_player_action(self, player: Player, card_instance: CardInstance):
         """If this is a synchronous game runner - like a console based, ask the
@@ -23,10 +27,13 @@ class GameRunner(ABC):
         card_instance = self.draw_fn(drawing_player)
         # Finish this
         while True:
+            print("Looping")
+            time.sleep(0.1)
             queued = [player.get_queued_card_instance() for player in self.players]
             pending = any([bool(ci) for ci in queued])
             done = True
             for player in self.players:
+                card_instance = player.get_queued_card_instance()
                 if (card_instance := player.get_queued_card_instance()) is not None:
                     self.invoke_player_action(player, card_instance)
                     done = False

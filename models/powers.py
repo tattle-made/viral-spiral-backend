@@ -17,4 +17,4 @@ class PlayerPower(InGameModel):
 
     class Meta:
         # Unique together
-        indexes = ((("name", "player_id"), True),)
+        indexes = ((("name", "player_id", "game_id"), True),)

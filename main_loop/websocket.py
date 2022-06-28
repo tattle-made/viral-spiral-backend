@@ -11,7 +11,7 @@ from flask_socketio import (
     disconnect,
 )
 
-from models import Game, Player
+from models import Game, Player, Card
 from deck_generators import GENERATORS
 
 from main_loop.base import GameRunner
@@ -39,16 +39,20 @@ class WebsocketGameRunner(GameRunner):
         self.tread = thread
         super().__init__(*args, **kwargs)
 
+    def send_to_room(self, data=None):
+        self.socket_loop_count += 1
+        # emit(
+        #     "text_response",
+        #     {"data": data, "count": self.socket_loop_count},
+        #     to=self.game.name,
+        # )
+        print(self.game.name, data)
+
     def do_round(self, *args, **kwargs):
         """Sleeps socket things"""
-        socketio.sleep(10)
+        socketio.sleep(1)
         super().do_round(*args, **kwargs)
-        self.socket_loop_count += 1
-        emit(
-            "text_response",
-            {"data": "Finished a round", "count": self.socket_loop_count},
-            to=self.name,
-        )
+        self.send_to_room("Finished a round")
 
     def loop_async(self):
         """Runs the loop function in a thread"""
@@ -80,6 +84,7 @@ class WebsocketGameRunner(GameRunner):
         colors: list[str],
         topics: list[str],
         draw_fn_name: str,
+        cards_filepath: str,
     ):
         game = Game.new(
             name=name,
@@ -87,6 +92,7 @@ class WebsocketGameRunner(GameRunner):
             colors=colors,
             topics=topics,
         )
+        Card.import_from_json(cards_filepath, defaults={"game_id": str(game.id_)})
         draw_fn = GENERATORS.get(draw_fn_name)
         assert draw_fn
         cls.create_thread(name=name, game=game, draw_fn=draw_fn)
@@ -125,6 +131,7 @@ def index():
 #     )
 
 
+@socketio.event
 def join_game(message):
     """Takes a player name and game room name. Joins the game. The game needs
     to be created with another API"""
@@ -133,24 +140,27 @@ def join_game(message):
     runner = WebsocketGameRunner.get_by_name(game_name)
     if runner:
         join_room(game_name)
-        emit("text_response", {"data": "Joined game {game_name}"})
+        runner.send_to_room("Joined game {game_name}")
     else:
-        emit("text_response", {"data": "Room not found"})
+        runner.send_to_room("Room not found")
 
 
+@socketio.event
 def create_game(message):
     """Creates a game"""
     game_name = message["game"]
-    players = message["players"].split(",")
-    colors = message["colors"].split(",")
-    topics = message["topics"].split(",")
+    players = message["players"]
+    colors = message["colors"]
+    topics = message["topics"]
     draw_fn_name = message["draw_fn_name"]
+    cards_filepath = message["cards_filepath"]
     WebsocketGameRunner.create(
         name=game_name,
         players=players,
         colors=colors,
         topics=topics,
         draw_fn_name=draw_fn_name,
+        cards_filepath=cards_filepath,
     )
 
 
