@@ -14,7 +14,7 @@ class ConsoleGameRunner(GameRunner):
         print(f"Player {player.name} - your turn to act. What do you want to do?")
         print("Allowed actions", player.allowed_actions(card_instance))
         action = input()
-        player.trigger_action(action)
+        player.perform_action(action)
 
 
 if __name__ == "__main__":

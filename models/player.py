@@ -126,7 +126,7 @@ class Player(InGameModel):
         oldest = self.card_queue_items.order_by(PlayerCardQueue.idx).first()
         return oldest
 
-    def trigger_action(self, action: str):
+    def perform_action(self, action: str):
         """Takes a string `action` which is the name of the function to
         trigger, for example `action_keep_card`"""
         assert action.startswith("action")
