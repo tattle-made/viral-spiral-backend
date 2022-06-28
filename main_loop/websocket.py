@@ -61,6 +61,10 @@ class WebsocketGameRunner(GameRunner):
         self.background_tasks.pop(self.name)
         close_room(self.name)
 
+    def perform_action(self, player_name, action):
+        player = Player.select().where(Player.game == self.game)
+        player.perform_action(action)
+
     @classmethod
     def create_thread(cls, *args, **kwargs):
         """Passes on the arguments to the init function and runs it in a
@@ -182,21 +186,25 @@ def create_game(message):
 
 
 @socketio.event
-def game_action(message):
+def player_action(message):
     session["receive_count"] = session.get("receive_count", 0) + 1
-    game_name = message["room"]
+    game_name = message["game"]
+    player_name = message["player"]
+    action = message["action"]
     runner = WebsocketGameRunner.get_by_name(game_name)
     if runner:
+        runner.perform_action(player_name, action)
         emit(
             "text_response",
-            {"data": message["data"], "count": session["receive_count"]},
+            {"data": f"Performed action {action}", "count": session["receive_count"]},
             to=request.sid,
         )
-    emit(
-        "text_response",
-        {"data": message["data"], "count": session["receive_count"]},
-        to=request.sid,
-    )
+    else:
+        emit(
+            "text_response",
+            {"data": "Failed to perform {action}", "count": session["receive_count"]},
+            to=request.sid,
+        )
 
 
 @socketio.event
