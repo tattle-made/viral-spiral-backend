@@ -37,10 +37,6 @@ class WebsocketGameRunner(GameRunner):
         self.thread = None
         super().__init__(*args, **kwargs)
 
-    @property
-    def name(self):
-        return self.game.name
-
     def send_to_room(self, data=None):
         self.socket_loop_count += 1
         emit(
@@ -90,8 +86,8 @@ class WebsocketGameRunner(GameRunner):
 
         # Now load the game from the database, or create a new game
         game = Game.select().where(Game.name == name)
-        if game:
-            return cls.get_by_game(game)
+        if game.count() == 1:
+            return cls.get_by_game(game.first())
 
     @classmethod
     def get(cls, name: str):
@@ -170,6 +166,7 @@ def create_game(message):
             colors=colors,
             topics=topics,
             cards_filepath=cards_filepath,
+            password=password,
             draw_fn_name=draw_fn_name,
         )
         emit("text_response", {"data": f"Created game: {runner.name}"})
@@ -181,8 +178,13 @@ def create_game(message):
 def load_game(message):
     """Loads a game"""
     game_name = message["game"]
+    password = message["password"]
     try:
         runner = WebsocketGameRunner.get(game_name)
+        if runner.game.password != password:
+            emit("text_response", {"data": "Incorrect password"})
+            return
+
         emit("text_response", {"data": f"Loaded game: {runner.name}"})
     except ValueError as exc:
         emit("text_response", {"data": str(exc)})

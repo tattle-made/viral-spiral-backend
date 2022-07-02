@@ -11,7 +11,6 @@ from models import Game, Player, CardInstance
 class GameRunner(ABC):
     def __init__(self, game: Game, logger: logging.Logger = None):
         self.game = game
-        self.name = game.name
         self.default_log_formatter = logging.Formatter(
             f"{self.name} : %(asctime)s - %(name)s - %(levelname)s - %(message)s"
         )
@@ -24,6 +23,10 @@ class GameRunner(ABC):
             handler = logging.StreamHandler(stream=sys.stdout)
             handler.setFormatter(self.default_log_formatter)
             self.logger.addHandler(handler)
+
+    @property
+    def name(self):
+        return self.game.name
 
     @property
     def players(self):
