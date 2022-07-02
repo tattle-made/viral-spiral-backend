@@ -14,32 +14,36 @@ class PlayerCardQueue(InGameModel):
 
     idx = peewee.IntegerField()
     player = peewee.ForeignKeyField(Player, backref="card_queue_items")
-    card_instance = peewee.ForeignKeyField(CardInstance,
-                                           backref="card_queue_items",
-                                           unique=True)
+    card_instance = peewee.ForeignKeyField(
+        CardInstance, backref="card_queue_items", unique=True
+    )
     active = peewee.BooleanField(default=True)
 
     @classmethod
-    def queue(cls, player, card_instance):
+    def queue(cls, card_instance):
         """Adds a card instance to given player's card queue"""
         # TODO atomic
         query = (
-            cls.select().where(cls.player == player).order_by(cls.idx.desc()).limit(1)
+            cls.select()
+            .where(cls.player == card_instance.player)
+            .order_by(cls.idx.desc())
+            .limit(1)
         )
         if query.count() == 1:
             idx = query.first().idx + 1
         else:
             idx = 0
         saved = cls.create(
-            idx=idx, player=player, game=player.game, card_instance=card_instance
+            idx=idx,
+            player=card_instance.player,
+            game=card_instance.game,
+            card_instance=card_instance,
         )
         return saved
 
     @classmethod
-    def dequeue(cls, player, card_instance):
+    def dequeue(cls, card_instance):
         """Sets a card queue instance to active == false"""
         cls.update(active=False).where(
-            cls.Player == player &
-            cls.card_instance == card_instance &
-            cls.is_active == True
+            cls.card_instance == card_instance & cls.active == True
         )

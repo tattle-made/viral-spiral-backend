@@ -61,9 +61,13 @@ class Player(InGameModel):
 
     def event_receive_card(self, card_instance):
         """queue the card instance the UI prompts user to do something"""
+        from .card import CardInstance
         from .card_queue import PlayerCardQueue
 
-        PlayerCardQueue.queue(self, card_instance)
+        to_card_instance = CardInstance.create(
+            card=card_instance.card, from_=card_instance, player=self
+        )
+        PlayerCardQueue.queue(to_card_instance)
 
     def action_keep_card(self, card_instance_id: str, to: str):
         """Remove this card from the queue"""
@@ -71,9 +75,11 @@ class Player(InGameModel):
         from .card_queue import PlayerCardQueue
         from .card import CardInstance
 
-        card_instance = self.card_instances.get(CardInstance.id_ == card_instance_id)
+        card_instance = self.card_instances.where(
+            CardInstance.id_ == card_instance_id
+        ).first()
 
-        PlayerCardQueue.dequeue(self, card_instance)
+        PlayerCardQueue.dequeue(card_instance)
 
     def action_pass_card(self, card_instance_id: str, to: str):
         """Can either pass the card to a player or to all players
@@ -83,8 +89,11 @@ class Player(InGameModel):
         from .powers import VIRAL_SPIRAL
         from .card import CardInstance
 
-        card_instance = self.card_instances.get(CardInstance.id_ == card_instance_id)
+        card_instance = self.card_instances.where(
+            CardInstance.id_ == card_instance_id
+        ).first()
 
+        breakpoint()
         if to == "all":
             if self.powers.where(self.__class__.name == VIRAL_SPIRAL).count() == 1:
                 to_players = self.__class__.select()
@@ -92,9 +101,11 @@ class Player(InGameModel):
                 raise NotAllowed("Viral spiral power missing to pass to all")
         else:
             player = self.game.player_set.where(Player.name == to)
+            if player.count() > 0:
+                player = player.first()
             if not player:
                 raise NotFound("Player not found")
-            to_players = [to]
+            to_players = [player]
 
         # Increase the original player's score
         original_player = card_instance.card.original_player.update(
@@ -108,7 +119,7 @@ class Player(InGameModel):
         # Dequeue this card
         from .card_queue import PlayerCardQueue
 
-        PlayerCardQueue.dequeue(self, card_instance)
+        PlayerCardQueue.dequeue(card_instance)
 
     def all_actions(self):
         """Utility function to return all possible actions"""
