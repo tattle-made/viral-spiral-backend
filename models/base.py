@@ -64,9 +64,9 @@ class Game(Model):
         cls,
         name,
         players: list[str],
-        colors: list[str],
-        topics: list[str],
-        cards_filepath: str = None,
+        colors_filepath: str,
+        topics_filepath: str,
+        cards_filepath: str,
         **model_kwargs
     ):
         """Creates a new game and performs initial setup"""
@@ -78,11 +78,11 @@ class Game(Model):
         game = cls.create(name=name, **model_kwargs)
 
         color_objs = []
-        for color_name in colors:
+        for color_name in json.load(open(colors_filepath)):
             color_objs.append(Color.create(name=color_name, game=game))
 
         topic_objs = []
-        for topic_name in topics:
+        for topic_name in json.load(open(topics_filepath)):
             topic_objs.append(AffinityTopic.create(name=topic_name, game=game))
 
         for player_name in players:
@@ -90,8 +90,7 @@ class Game(Model):
             colors = color_objs[1:] + [color_objs[0]]
             player = Player.create(name=player_name, color=color, game=game)
 
-        if cards_filepath:
-            Card.import_from_json(cards_filepath, defaults={"game_id": str(game.id_)})
+        Card.import_from_json(cards_filepath, defaults={"game_id": str(game.id_)})
 
         return game
 
