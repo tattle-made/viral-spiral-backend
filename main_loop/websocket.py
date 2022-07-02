@@ -41,11 +41,11 @@ class WebsocketGameRunner(GameRunner):
 
     def send_to_room(self, data=None):
         self.socket_loop_count += 1
-        # emit(
-        #     "text_response",
-        #     {"data": data, "count": self.socket_loop_count},
-        #     to=self.game.name,
-        # )
+        emit(
+            "text_response",
+            {"data": data, "count": self.socket_loop_count},
+            to=self.game.name,
+        )
         print(self.game.name, data)
 
     def do_round(self, *args, **kwargs):
@@ -70,13 +70,6 @@ class WebsocketGameRunner(GameRunner):
         player.perform_action(action)
 
     @classmethod
-    def create_thread(cls, *args, **kwargs):
-        """Passes on the arguments to the init function and runs it in a
-        background thread"""
-        runner = cls(*args, **kwargs)
-        runner.loop_async()
-
-    @classmethod
     def create(
         cls,
         name: str,
@@ -95,7 +88,9 @@ class WebsocketGameRunner(GameRunner):
         Card.import_from_json(cards_filepath, defaults={"game_id": str(game.id_)})
         draw_fn = GENERATORS.get(draw_fn_name)
         assert draw_fn
-        cls.create_thread(name=name, game=game, draw_fn=draw_fn)
+        runner = cls(name=name, game=game, draw_fn=draw_fn)
+        runner.loop_async()
+        return runner
 
     @classmethod
     def get_by_name(cls, name):
@@ -154,7 +149,7 @@ def create_game(message):
     topics = message["topics"]
     draw_fn_name = message["draw_fn_name"]
     cards_filepath = message["cards_filepath"]
-    WebsocketGameRunner.create(
+    return WebsocketGameRunner.create(
         name=game_name,
         players=players,
         colors=colors,
@@ -253,5 +248,9 @@ def test_disconnect():
     print("Client disconnected", request.sid)
 
 
-if __name__ == "__main__":
+def run():
     socketio.run(app)
+
+
+if __name__ == "__main__":
+    run()

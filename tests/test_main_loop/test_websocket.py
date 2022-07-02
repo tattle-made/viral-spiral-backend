@@ -1,6 +1,6 @@
 import json
 from uuid import uuid4
-from main_loop.websocket import create_game
+from main_loop.websocket import create_game, run
 from models import Game, Card
 
 data = dict(
@@ -17,7 +17,10 @@ print(f"Data: {json.dumps(data, indent=2)}")
 
 def test_without_sockets():
 
-    create_game(data)
+    runner = create_game(data)
+    print("Created game", runner.game.id_)
+    print("Running server")
+    run()
     # game = Game.select().where(Game.name==data["game"]).first()
     # Card.import_from_json("x.json", defaults={"game_id": str(game.id_)})
 

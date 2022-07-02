@@ -3,6 +3,9 @@
     var socket = io();
     window.socket = socket;
     socket.on('connect', function() {
-        socket.emit('my event', {data: 'I\'m connected!'});
+        socket.emit('my_ping');
     });
+    socket.on('text_response', data => {
+      console.log(data);
+    })
 </script>
