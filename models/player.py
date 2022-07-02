@@ -31,6 +31,8 @@ class Player(InGameModel):
         PlayerInitialAffinity, backref="player", unique=True, null=True
     )
 
+    client_id = peewee.CharField(null=True)
+
     def bias(self, against: Color) -> int:
         """Returns the bias of this player against a given color"""
         # TODO optimise
