@@ -30,8 +30,13 @@ class Player(InGameModel):
     initial_affinity = peewee.ForeignKeyField(
         PlayerInitialAffinity, backref="player", unique=True, null=True
     )
+    sequence = peewee.IntegerField(null=False, default=1)
 
     client_id = peewee.CharField(null=True)
+
+    class Meta:
+        # Unique together
+        indexes = ((("sequence", "game"), True),)
 
     def bias(self, against: Color) -> int:
         """Returns the bias of this player against a given color"""

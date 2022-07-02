@@ -1,5 +1,6 @@
 """Base classes for models"""
 from abc import ABC
+import random
 from io import StringIO
 import json
 import uuid
@@ -85,10 +86,14 @@ class Game(Model):
         for topic_name in json.load(open(topics_filepath)):
             topic_objs.append(AffinityTopic.create(name=topic_name, game=game))
 
-        for player_name in players:
+        sequences = range(1, len(players) + 1)
+        random.shuffle(sequences)
+        for idx, player_name in enumerate(players):
             color = color_objs[0]
             colors = color_objs[1:] + [color_objs[0]]
-            player = Player.create(name=player_name, color=color, game=game)
+            player = Player.create(
+                name=player_name, color=color, game=game, sequence=sequences[idx]
+            )
 
         Card.import_from_json(cards_filepath, defaults={"game_id": str(game.id_)})
 
