@@ -14,15 +14,10 @@ class PlayerCardQueue(InGameModel):
 
     idx = peewee.IntegerField()
     player = peewee.ForeignKeyField(Player, backref="card_queue_items")
-    card_instance = peewee.ForeignKeyField(CardInstance, backref="card_queue_items")
+    card_instance = peewee.ForeignKeyField(CardInstance,
+                                           backref="card_queue_items",
+                                           unique=True)
     active = peewee.BooleanField(default=True)
-
-    class Meta:
-        # Unique together
-        indexes = (
-            (("idx", "player", "game"), True),
-            (("card_instance", "player", "game"), True),
-        )
 
     @classmethod
     def queue(cls, player, card_instance):
@@ -43,10 +38,8 @@ class PlayerCardQueue(InGameModel):
     @classmethod
     def dequeue(cls, player, card_instance):
         """Sets a card queue instance to active == false"""
-        query = (
-            cls.select()
-            .where(player == player)
-            .where(card_instance == card_instance)
-            .where(active=True)
+        cls.update(active=False).where(
+            cls.Player == player &
+            cls.card_instance == card_instance &
+            cls.is_active == True
         )
-        query.update(active=False)

@@ -65,19 +65,25 @@ class Player(InGameModel):
 
         PlayerCardQueue.queue(self, card_instance)
 
-    def action_keep_card(self, card_instance):
+    def action_keep_card(self, card_instance_id: str, to: str):
         """Remove this card from the queue"""
         # TODO check if this action is allowed
         from .card_queue import PlayerCardQueue
+        from .card import CardInstance
+
+        card_instance = self.card_instances.get(CardInstance.id_ == card_instance_id)
 
         PlayerCardQueue.dequeue(self, card_instance)
 
-    def action_pass_card(self, card_instance, to):
+    def action_pass_card(self, card_instance_id: str, to: str):
         """Can either pass the card to a player or to all players
 
         `to` can be "all" or a player's name"""
         # TODO check if this card can be passed
         from .powers import VIRAL_SPIRAL
+        from .card import CardInstance
+
+        card_instance = self.card_instances.get(CardInstance.id_ == card_instance_id)
 
         if to == "all":
             if self.powers.where(self.__class__.name == VIRAL_SPIRAL).count() == 1:

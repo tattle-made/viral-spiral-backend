@@ -92,7 +92,7 @@ class WebsocketGameRunner(GameRunner):
         self.send_to_player(
             player,
             {
-                "card": model_to_dict(card_instance.card),
+                "card_instance": model_to_dict(card_instance),
                 "recipients": [rec.name for rec in card_instance.allowed_recipients()],
             },
             event="play_card",
@@ -169,7 +169,7 @@ def background_thread():
     """Main Loop. Just sends an alive signal."""
     count = 0
     action_interval_secs = 2
-    ticker_interval_secs = 1
+    ticker_interval_secs = 10
     while True:
         socketio.sleep(0.1)
         count += 1
