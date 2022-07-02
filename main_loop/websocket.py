@@ -12,7 +12,6 @@ from flask_socketio import (
 )
 
 from models import Game, Player, Card
-from deck_generators import GENERATORS
 
 from main_loop.base import GameRunner
 
@@ -35,9 +34,12 @@ class WebsocketGameRunner(GameRunner):
 
     def __init__(self, *args, name: str = None, **kwargs):
         self.socket_loop_count = 0
-        self.name = name
-        self.tread = thread
+        self.thread = None
         super().__init__(*args, **kwargs)
+
+    @property
+    def name(self):
+        return self.game.name
 
     def send_to_room(self, data=None):
         self.socket_loop_count += 1
@@ -70,33 +72,44 @@ class WebsocketGameRunner(GameRunner):
         player.perform_action(action)
 
     @classmethod
-    def create(
-        cls,
-        name: str,
-        players: list[str],
-        colors: list[str],
-        topics: list[str],
-        draw_fn_name: str,
-        cards_filepath: str,
-    ):
-        game = Game.new(
-            name=name,
-            players=players,
-            colors=colors,
-            topics=topics,
-        )
-        Card.import_from_json(cards_filepath, defaults={"game_id": str(game.id_)})
-        draw_fn = GENERATORS.get(draw_fn_name)
-        assert draw_fn
-        runner = cls(name=name, game=game, draw_fn=draw_fn)
+    def get_by_game(cls, game: Game):
+        """Returns a game runner obj given a Game obj"""
+        # Failsafe - in case this is called for an in-memory game
+        if cls.background_tasks.get(game.name):
+            return cls.get_by_name(game.name)
+
+        runner = cls(game=game)
         runner.loop_async()
         return runner
 
     @classmethod
-    def get_by_name(cls, name):
-        runner = cls.background_tasks.get(name)
-        if runner:
+    def get_by_name(cls, name: str):
+        """Returns a game runner obj given a Game name"""
+        if runner := cls.background_tasks.get(name):
             return runner
+
+        # Now load the game from the database, or create a new game
+        game = Game.select().where(Game.name == name)
+        if game:
+            return cls.get_by_game(game)
+
+    @classmethod
+    def get(cls, name: str):
+        """Loads an existing game"""
+        runner = cls.get_by_name(name)
+        if not runner:
+            raise ValueError(f"No game found: {name}")
+        return runner
+
+    @classmethod
+    def create(cls, name: str, **game_kwargs):
+        """creates a game runner object"""
+        if runner := cls.get_by_name(name):
+            raise ValueError(f"Game already exists: {name}")
+
+        # create a new game
+        game = Game.new(name, **game_kwargs)
+        return cls.get_by_game(game)
 
 
 def background_thread():
@@ -147,16 +160,32 @@ def create_game(message):
     players = message["players"]
     colors = message["colors"]
     topics = message["topics"]
+    password = message["password"]
     draw_fn_name = message["draw_fn_name"]
     cards_filepath = message["cards_filepath"]
-    return WebsocketGameRunner.create(
-        name=game_name,
-        players=players,
-        colors=colors,
-        topics=topics,
-        draw_fn_name=draw_fn_name,
-        cards_filepath=cards_filepath,
-    )
+    try:
+        runner = WebsocketGameRunner.create(
+            name=game_name,
+            players=players,
+            colors=colors,
+            topics=topics,
+            cards_filepath=cards_filepath,
+            draw_fn_name=draw_fn_name,
+        )
+        emit("text_response", {"data": f"Created game: {runner.name}"})
+    except ValueError as exc:
+        emit("text_response", {"data": str(exc)})
+
+
+@socketio.event
+def load_game(message):
+    """Loads a game"""
+    game_name = message["game"]
+    try:
+        runner = WebsocketGameRunner.get(game_name)
+        emit("text_response", {"data": f"Loaded game: {runner.name}"})
+    except ValueError as exc:
+        emit("text_response", {"data": str(exc)})
 
 
 # @socketio.event
@@ -232,6 +261,12 @@ def disconnect_request():
 @socketio.event
 def my_ping():
     emit("my_pong")
+
+
+@socketio.event
+def my_echo(message):
+    message["echo"] = True
+    emit("text_response", message)
 
 
 @socketio.event

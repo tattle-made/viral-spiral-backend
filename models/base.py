@@ -6,6 +6,8 @@ import uuid
 import peewee
 from playhouse.dataset import DataSet
 
+from deck_generators import GENERATORS
+
 db = peewee.SqliteDatabase("game.db")
 dataset = DataSet(db)
 
@@ -43,19 +45,30 @@ class Game(Model):
 
     name = peewee.CharField(unique=True)
     rounds = peewee.IntegerField(default=0)
+    draw_fn_name = peewee.CharField(unique=False)
+    password = peewee.CharField(unique=False)
 
     def active(self):
         # TODO implement this
         return self.rounds <= 5
 
     @classmethod
-    def new(cls, name, players: list[str], colors: list[str], topics: list[str]):
+    def new(
+        cls,
+        name,
+        players: list[str],
+        colors: list[str],
+        topics: list[str],
+        cards_filepath: str = None,
+        **model_kwargs
+    ):
         """Creates a new game and performs initial setup"""
         from .player import Player
         from .counters import Color, AffinityTopic
+        from .card import Card
 
         # TODO create initial biases
-        game = cls.create(name=name)
+        game = cls.create(name=name, **model_kwargs)
 
         color_objs = []
         for color_name in colors:
@@ -69,7 +82,15 @@ class Game(Model):
             color = color_objs[0]
             colors = color_objs[1:] + [color_objs[0]]
             player = Player.create(name=player_name, color=color, game=game)
+
+        if cards_filepath:
+            Card.import_from_json(cards_filepath, defaults={"game_id": str(game.id_)})
+
         return game
+
+    def draw(self, player):
+        draw_fn = GENERATORS.get(self.draw_fn_name)
+        return draw_fn(player)
 
     @classmethod
     def get_by_name(cls, name):

@@ -1,5 +1,7 @@
 """Abstract class for main loop"""
 
+import logging
+import sys
 import time
 from abc import ABC, abstractmethod
 from typing import Callable
@@ -7,10 +9,21 @@ from models import Game, Player, CardInstance
 
 
 class GameRunner(ABC):
-    def __init__(self, game: Game, draw_fn: Callable):
+    def __init__(self, game: Game, logger: logging.Logger = None):
         self.game = game
         self.name = game.name
-        self.draw_fn = draw_fn
+        self.default_log_formatter = logging.Formatter(
+            f"{self.name} : %(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        )
+        if logger:
+            self.logger = logger
+            for handler in self.logger.handlers:
+                handler.setFormatter(self.default_log_formatter)
+        else:
+            self.logger = logging.Logger(name=self.name, level=logging.INFO)
+            handler = logging.StreamHandler(stream=sys.stdout)
+            handler.setFormatter(self.default_log_formatter)
+            self.logger.addHandler(handler)
 
     @property
     def players(self):
@@ -22,12 +35,13 @@ class GameRunner(ABC):
         a web server, no need to do anything here"""
         pass
 
-    def do_round(self, drawing_player: Player):
-        """Performs a round in `game` with `drawing_player` drawing a card"""
-        card_instance = self.draw_fn(drawing_player)
-        # Finish this
+    def finish_round(self):
+        """Invokes actions and waits until no cards are queued"""
         while True:
-            print("Looping")
+            if not self.game.active():
+                self.logger.info("Game has ended")
+                return
+            self.logger.info("Looping")
             time.sleep(0.1)
             queued = [player.get_queued_card_instance() for player in self.players]
             pending = any([bool(ci) for ci in queued])
@@ -39,6 +53,12 @@ class GameRunner(ABC):
                     done = False
             if done:
                 break
+
+    def do_round(self, drawing_player: Player):
+        """Performs a round in `game` with `drawing_player` drawing a card"""
+        self.finish_round()  # Finish any older rounds
+        card_instance = self.game.draw(drawing_player)
+        self.finish_round()
 
     def exit(self):
         """Run any exit operations if you want"""
