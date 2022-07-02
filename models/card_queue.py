@@ -20,8 +20,8 @@ class PlayerCardQueue(InGameModel):
     class Meta:
         # Unique together
         indexes = (
-            (("idx", "player_id", "game_id"), True),
-            (("card_instance_id", "player_id", "game_id"), True),
+            (("idx", "player", "game"), True),
+            (("card_instance", "player", "game"), True),
         )
 
     @classmethod

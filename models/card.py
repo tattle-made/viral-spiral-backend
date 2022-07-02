@@ -74,7 +74,7 @@ class CardInstance(InGameModel):
 
     class Meta:
         # Unique together
-        indexes = ((("card_id", "player_id", "game_id"), True),)
+        indexes = ((("card", "player", "game"), True),)
 
     @property
     def status(self):

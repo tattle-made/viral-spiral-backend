@@ -9,7 +9,7 @@ class AffinityTopic(InGameModel):
 
     class Meta:
         # Unique together
-        indexes = ((("name", "game_id"), True),)
+        indexes = ((("name", "game"), True),)
 
 
 class Color(InGameModel):
@@ -19,4 +19,4 @@ class Color(InGameModel):
 
     class Meta:
         # Unique together
-        indexes = ((("name", "game_id"), True),)
+        indexes = ((("name", "game"), True),)

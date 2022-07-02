@@ -4,11 +4,16 @@ from io import StringIO
 import json
 import uuid
 import peewee
+import peeweedbevolve
 from playhouse.dataset import DataSet
 
-from deck_generators import GENERATORS
-
-db = peewee.SqliteDatabase("game.db")
+# TODO shift these to environment variables
+db = peewee.PostgresqlDatabase(
+    "tattleviralspiral",
+    host="localhost",
+    port=5432,
+    user="postgres",
+)
 dataset = DataSet(db)
 
 model_id_generator = uuid.uuid4
@@ -89,6 +94,8 @@ class Game(Model):
         return game
 
     def draw(self, player):
+        from deck_generators import GENERATORS
+
         draw_fn = GENERATORS.get(self.draw_fn_name)
         return draw_fn(player)
 
