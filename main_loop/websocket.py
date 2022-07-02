@@ -1,4 +1,6 @@
 import os
+import pickle
+from queue import Queue
 from threading import Lock, Thread
 from flask import Flask, render_template, session, request, copy_current_request_context
 from flask_socketio import (
@@ -12,7 +14,7 @@ from flask_socketio import (
 )
 from playhouse.shortcuts import model_to_dict
 
-from models import Game, Player, Card
+from models import Game, Player, Card, CardInstance
 
 from main_loop.base import GameRunner
 
@@ -28,36 +30,78 @@ thread = None
 thread_lock = Lock()
 
 
+class UniqueQueue(Queue):
+    def __init__(self, *args, **kwargs):
+        self._set = set()
+        super().__init__(*args, **kwargs)
+
+    def put(self, d):
+        if d not in self._set:
+            super().put(d)
+            self._set.add(d)
+
+    def get(self):
+        retval = super().get()
+        self._set.remove(retval)
+        return retval
+
+
 class WebsocketGameRunner(GameRunner):
 
     background_tasks = {}
     max_games = 3  # Allow maximum of 3 games to run in parallel
+    emit_queue = UniqueQueue()
 
     def __init__(self, *args, name: str = None, **kwargs):
         self.thread = None
         super().__init__(*args, **kwargs)
 
-    def send_to_room(self, data=None):
-        emit(
-            "text_response",
+    @classmethod
+    def flush_emit_queue(cls):
+        while cls.emit_queue.qsize() > 0:
+            pickled = cls.emit_queue.get()
+            obj = dict(pickle.loads(pickled))
+            socketio.emit(*obj["args"], **obj["kwargs"])
+
+    @classmethod
+    def emit_async(cls, *args, **kwargs):
+        """Enqueues the message for emitting"""
+        the_dict = {"args": args, "kwargs": kwargs}
+        pickled = pickle.dumps(sorted(the_dict.items()))
+        cls.emit_queue.put(pickled)
+
+    @classmethod
+    def send_to_game(cls, game: Game, data=None, event="text_response"):
+        cls.emit_async(
+            event,
             {"data": data},
-            to=self.game.name,
+            to=game.name,
         )
-        print(self.game.name, data)
 
     @classmethod
-    def send_to_player(cls, player: Player, data=None):
-        emit("text_response", {"data": data}, to=player.client_id)
+    def send_to_player(cls, player: Player, data=None, event="text_response"):
+        cls.emit_async(event, {"data": data}, to=player.client_id)
 
     @classmethod
-    def send_reply(cls, data=None):
-        emit("text_response", {"data": data}, to=request.sid)
+    def send_reply(cls, data=None, event="text_response"):
+        cls.emit_async(event, {"data": data}, to=request.sid)
+
+    def invoke_player_action(self, player: Player, card_instance: CardInstance):
+
+        self.send_to_player(
+            player,
+            {
+                "card": model_to_dict(card_instance.card),
+                "recipients": [rec.name for rec in card_instance.allowed_recipients()],
+            },
+            event="play_card",
+        )
 
     def do_round(self, *args, **kwargs):
         """Sleeps socket things"""
         socketio.sleep(1)
         super().do_round(*args, **kwargs)
-        self.send_to_room("Finished a round")
+        self.send_to_game(self.game, "Finished a round")
 
     def loop_async(self):
         """Runs the loop function in a thread"""
@@ -123,12 +167,17 @@ class WebsocketGameRunner(GameRunner):
 def background_thread():
     """Main Loop. Just sends an alive signal."""
     count = 0
+    action_interval_secs = 2
+    ticker_interval_secs = 1
     while True:
-        socketio.sleep(10)
+        socketio.sleep(0.1)
         count += 1
-        socketio.emit(
-            "text_response", {"data": "Server generated event", "count": count}
-        )
+        if count % (ticker_interval_secs * 10) == 0:
+            socketio.emit(
+                "text_response", {"data": "Server generated event", "count": count}
+            )
+        if count % (action_interval_secs * 10) == 0:
+            WebsocketGameRunner.flush_emit_queue()
 
 
 @app.route("/")

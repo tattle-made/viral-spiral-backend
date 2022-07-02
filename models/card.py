@@ -83,3 +83,16 @@ class CardInstance(InGameModel):
             return self.STATUS_PASSED
         else:
             return self.STATUS_HOLDING
+
+    def allowed_recipients(self):
+        """Returns a list of players to whom this card can be passed"""
+        # TODO optimise
+        # Can select only certain fields
+        card_instances = CardInstance.select(CardInstance.player_id).where(
+            CardInstance.card == self.card
+        )
+        completed_player_ids = [ci.player_id for ci in card_instances]
+        select_args = []
+        return Player.select() - Player.select().where(
+            Player.id_.in_(completed_player_ids)
+        )
