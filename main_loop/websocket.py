@@ -10,8 +10,9 @@ from flask_socketio import (
     rooms,
     disconnect,
 )
+from playhouse.shortcuts import model_to_dict
 
-from models import Game, Player, Card
+from models import Game, Player, Card, json_dumps
 
 from main_loop.base import GameRunner
 
@@ -66,6 +67,12 @@ class WebsocketGameRunner(GameRunner):
     def perform_action(self, player_name, action):
         player = Player.select().where(Player.game == self.game)
         player.perform_action(action)
+
+    def get_queued_card(self, player_name):
+        player = Player.select().where(Player.game == self.game)
+        card_instance = player.get_queued_card_instance()
+        if card_instance:
+            return card_instance.card
 
     @classmethod
     def get_by_game(cls, game: Game):
@@ -222,8 +229,19 @@ def load_game(message):
 
 
 @socketio.event
+def get_queued_card(message):
+    """Get the state given a player"""
+    game_name = message["game"]
+    player_name = message["player"]
+    runner = WebsocketGameRunner.get_by_name(game_name)
+    if runner:
+        card = runner.get_queued_card(player_name)
+        if card:
+            return json_dumps(model_to_dict(card))
+
+
+@socketio.event
 def player_action(message):
-    session["receive_count"] = session.get("receive_count", 0) + 1
     game_name = message["game"]
     player_name = message["player"]
     action = message["action"]
@@ -232,13 +250,13 @@ def player_action(message):
         runner.perform_action(player_name, action)
         emit(
             "text_response",
-            {"data": f"Performed action {action}", "count": session["receive_count"]},
+            {"data": f"Performed action {action}"},
             to=request.sid,
         )
     else:
         emit(
             "text_response",
-            {"data": "Failed to perform {action}", "count": session["receive_count"]},
+            {"data": "Failed to perform {action}"},
             to=request.sid,
         )
 

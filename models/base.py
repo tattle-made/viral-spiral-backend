@@ -4,8 +4,8 @@ from io import StringIO
 import json
 import uuid
 import peewee
-import peeweedbevolve
 from playhouse.dataset import DataSet
+import peeweedbevolve
 
 # TODO shift these to environment variables
 db = peewee.PostgresqlDatabase(
@@ -17,6 +17,27 @@ db = peewee.PostgresqlDatabase(
 dataset = DataSet(db)
 
 model_id_generator = uuid.uuid4
+
+
+class UUIDSafeJSONEncoder(json.JSONEncoder):
+    """Converts UUID into str"""
+
+    def default(self, o):
+        if isinstance(o, uuid.UUID):
+            return o.urn
+
+
+def json_loads(the_str, *args, **kwargs):
+    def hook(obj):
+        if isinstance(obj, str) and obj.startswith("urn:uuid"):
+            return uuid.UUID(obj)
+
+    return json.loads(the_str, *args, object_hook=hook, **kwargs)
+
+
+def json_dumps(the_dict, *args, **kwargs):
+
+    return json.dumps(the_dict, *args, cls=UUIDSafeJSONEncoder, **kwargs)
 
 
 class Model(peewee.Model):
