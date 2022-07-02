@@ -34,18 +34,24 @@ class WebsocketGameRunner(GameRunner):
     max_games = 3  # Allow maximum of 3 games to run in parallel
 
     def __init__(self, *args, name: str = None, **kwargs):
-        self.socket_loop_count = 0
         self.thread = None
         super().__init__(*args, **kwargs)
 
     def send_to_room(self, data=None):
-        self.socket_loop_count += 1
         emit(
             "text_response",
-            {"data": data, "count": self.socket_loop_count},
+            {"data": data},
             to=self.game.name,
         )
         print(self.game.name, data)
+
+    @classmethod
+    def send_to_player(cls, player: Player, data=None):
+        emit("text_response", {"data": data}, to=player.client_id)
+
+    @classmethod
+    def send_reply(cls, data=None):
+        emit("text_response", {"data": data}, to=request.sid)
 
     def do_round(self, *args, **kwargs):
         """Sleeps socket things"""
@@ -65,13 +71,12 @@ class WebsocketGameRunner(GameRunner):
         close_room(self.name)
 
     def perform_action(self, player_name, action):
-        player = Player.select().where(Player.game == self.game)
+        player = self.game.player_set.where(Player.name == player_name).get()
         player.perform_action(action)
 
     def get_queued_card(self, player_name):
-        player = Player.select().where(Player.game == self.game)
-        card_instance = player.get_queued_card_instance()
-        if card_instance:
+        player = self.game.player_set.where(Player.name == player_name).get()
+        if card_instance := player.get_queued_card_instance():
             return card_instance.card
 
     @classmethod
@@ -132,16 +137,6 @@ def index():
     return render_template("index.html", async_mode=socketio.async_mode)
 
 
-# @socketio.event
-# def join_room(message):
-#     join_room(message["room"])
-#     session["receive_count"] = session.get("receive_count", 0) + 1
-#     emit(
-#         "text_response",
-#         {"data": "In rooms: " + ", ".join(rooms()), "count": session["receive_count"]},
-#     )
-
-
 @socketio.event
 def join_game(message):
     """Takes a player name and game room name. Joins the game. The game needs
@@ -150,10 +145,15 @@ def join_game(message):
     player_name = message["player"]
     runner = WebsocketGameRunner.get_by_name(game_name)
     if runner:
+        player = runner.game.player_set.where(Player.name == player_name).get()
+        if player.client_id == request.client_id:
+            runner.send_reply(f"Already joined game {game_name}")
+        player.client_id = request.client_id
+        player.save()
         join_room(game_name)
-        runner.send_to_room("Joined game {game_name}")
+        runner.send_reply(f"Joined game {game_name}")
     else:
-        runner.send_to_room("Room not found")
+        runner.send_reply(f"Room not found {game_name}")
 
 
 @socketio.event
@@ -197,37 +197,6 @@ def load_game(message):
         emit("text_response", {"data": str(exc)})
 
 
-# @socketio.event
-# def leave_room(message):
-#     leave_room(message["room"])
-#     session["receive_count"] = session.get("receive_count", 0) + 1
-#     emit(
-#         "text_response",
-#         {"data": "In rooms: " + ", ".join(rooms()), "count": session["receive_count"]},
-#     )
-
-
-# @socketio.event
-# def my_rooms(message):
-#     emit(
-#         "text_response",
-#     )
-
-
-# @socketio.on("close_room")
-# def on_close_room(message):
-#     session["receive_count"] = session.get("receive_count", 0) + 1
-#     emit(
-#         "text_response",
-#         {
-#             "data": "Room " + message["room"] + " is closing.",
-#             "count": session["receive_count"],
-#         },
-#         to=message["room"],
-#     )
-#     close_room(message["room"])
-
-
 @socketio.event
 def get_queued_card(message):
     """Get the state given a player"""
@@ -237,7 +206,9 @@ def get_queued_card(message):
     if runner:
         card = runner.get_queued_card(player_name)
         if card:
-            return json_dumps(model_to_dict(card))
+            runner.send_reply(json_dumps(model_to_dict(card)))
+            return
+    runner.send_reply("No card")
 
 
 @socketio.event
