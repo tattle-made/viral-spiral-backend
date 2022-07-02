@@ -1,7 +1,7 @@
 import peewee
 from .base import InGameModel
 from .counters import AffinityTopic, Color
-from exceptions import NotAllowed
+from exceptions import NotAllowed, NotFound
 
 
 class PlayerInitialBias(InGameModel):
@@ -75,7 +75,7 @@ class Player(InGameModel):
     def action_pass_card(self, card_instance, to):
         """Can either pass the card to a player or to all players
 
-        `to` can be either a Player instance or "all" """
+        `to` can be "all" or a player's name"""
         # TODO check if this card can be passed
         from .powers import VIRAL_SPIRAL
 
@@ -84,10 +84,11 @@ class Player(InGameModel):
                 to_players = self.__class__.select()
             else:
                 raise NotAllowed("Viral spiral power missing to pass to all")
-        elif isinstance(to, Player):
-            to_players = [to]
         else:
-            raise ValueError("`to` can be either a Player or `all`")
+            player = self.game.player_set.where(Player.name == to)
+            if not player:
+                raise NotFound("Player not found")
+            to_players = [to]
 
         # Increase the original player's score
         original_player = card_instance.card.original_player.update(
@@ -128,8 +129,10 @@ class Player(InGameModel):
         oldest = self.card_queue_items.order_by(PlayerCardQueue.idx).first()
         return oldest.card_instance
 
-    def perform_action(self, action: str):
+    def perform_action(self, action: str, **kwargs):
         """Takes a string `action` which is the name of the function to
-        trigger, for example `action_keep_card`"""
+        trigger, for example `action_keep_card`
+
+        kwargs is passed onto the action function"""
         assert action.startswith("action")
-        return getattr(self, action)()
+        return getattr(self, action)(**kwargs)

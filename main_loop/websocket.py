@@ -115,9 +115,9 @@ class WebsocketGameRunner(GameRunner):
         self.background_tasks.pop(self.name)
         close_room(self.name)
 
-    def perform_action(self, player_name, action):
+    def perform_action(self, player_name, action, **kwargs):
         player = self.game.player_set.where(Player.name == player_name).get()
-        player.perform_action(action)
+        player.perform_action(action, **kwargs)
 
     def get_queued_card(self, player_name):
         player = self.game.player_set.where(Player.name == player_name).get()
@@ -267,9 +267,10 @@ def player_action(message):
     game_name = message["game"]
     player_name = message["player"]
     action = message["action"]
+    kwargs = message["kwargs"]
     runner = WebsocketGameRunner.get_by_name(game_name)
     if runner:
-        runner.perform_action(player_name, action)
+        runner.perform_action(player_name, action, **kwargs)
         emit(
             "text_response",
             {"data": f"Performed action {action}"},
