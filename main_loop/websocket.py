@@ -203,7 +203,7 @@ def join_game(message):
         join_room(game_name)
         runner.send_reply(f"Joined game {game_name}")
     else:
-        runner.send_reply(f"Room not found {game_name}")
+        WebsocketGameRunner.send_reply(f"Room not found {game_name}")
 
 
 @socketio.event
@@ -318,7 +318,7 @@ def connect():
     with thread_lock:
         if thread is None:
             thread = socketio.start_background_task(background_thread)
-    emit("text_response", {"data": "Connected", "count": 0})
+    emit("text_response", {"data": "Connected"})
 
 
 @socketio.on("disconnect")

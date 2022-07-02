@@ -86,7 +86,7 @@ class Game(Model):
         for topic_name in json.load(open(topics_filepath)):
             topic_objs.append(AffinityTopic.create(name=topic_name, game=game))
 
-        sequences = range(1, len(players) + 1)
+        sequences = [x for x in range(1, len(players) + 1)]
         random.shuffle(sequences)
         for idx, player_name in enumerate(players):
             color = color_objs[0]
