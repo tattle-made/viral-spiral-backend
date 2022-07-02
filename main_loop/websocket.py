@@ -80,7 +80,8 @@ class WebsocketGameRunner(GameRunner):
 
     @classmethod
     def send_to_player(cls, player: Player, data=None, event="text_response"):
-        cls.emit_async(event, {"data": data}, to=player.client_id)
+        if player.client_id:
+            cls.emit_async(event, {"data": data}, to=player.client_id)
 
     @classmethod
     def send_reply(cls, data=None, event="text_response"):
@@ -195,9 +196,9 @@ def join_game(message):
     runner = WebsocketGameRunner.get_by_name(game_name)
     if runner:
         player = runner.game.player_set.where(Player.name == player_name).get()
-        if player.client_id == request.client_id:
+        if player.client_id == request.sid:
             runner.send_reply(f"Already joined game {game_name}")
-        player.client_id = request.client_id
+        player.client_id = request.sid
         player.save()
         join_room(game_name)
         runner.send_reply(f"Joined game {game_name}")
@@ -210,8 +211,8 @@ def create_game(message):
     """Creates a game"""
     game_name = message["game"]
     players = message["players"]
-    colors = message["colors"]
-    topics = message["topics"]
+    colors_filepath = message["colors_filepath"]
+    topics_filepath = message["topics_filepath"]
     password = message["password"]
     draw_fn_name = message["draw_fn_name"]
     cards_filepath = message["cards_filepath"]
@@ -219,8 +220,8 @@ def create_game(message):
         runner = WebsocketGameRunner.create(
             name=game_name,
             players=players,
-            colors=colors,
-            topics=topics,
+            colors_filepath=colors_filepath,
+            topics_filepath=topics_filepath,
             cards_filepath=cards_filepath,
             password=password,
             draw_fn_name=draw_fn_name,
