@@ -93,6 +93,6 @@ class CardInstance(InGameModel):
         )
         completed_player_ids = [ci.player_id for ci in card_instances]
         select_args = []
-        return Player.select() - Player.select().where(
+        return self.game.player_set - Player.select().where(
             Player.id_.in_(completed_player_ids)
         )

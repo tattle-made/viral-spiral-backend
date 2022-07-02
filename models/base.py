@@ -6,6 +6,7 @@ import json
 import uuid
 import peewee
 from playhouse.dataset import DataSet
+from playhouse.shortcuts import model_to_dict
 import peeweedbevolve
 
 # TODO shift these to environment variables
@@ -100,9 +101,14 @@ class Game(Model):
         return game
 
     def draw(self, player):
+        from .player import Player
         from deck_generators import GENERATORS
 
         draw_fn = GENERATORS.get(self.draw_fn_name)
+        Player.update(current=False).where(Player.game == self).execute()
+        Player.update(sequence=Player.sequence + 100, current=True).where(
+            Player.id_ == player.id_
+        ).execute()
         return draw_fn(player)
 
     @classmethod
@@ -111,6 +117,21 @@ class Game(Model):
         not found"""
 
         return cls.select().where(cls.name == name)
+
+    def about(self):
+        """Returns a dictionary about this game"""
+        from .player import Player
+
+        return {
+            "name": self.name,
+            "players": [model_to_dict(player) for player in self.player_set],
+            "colors": [model_to_dict(color) for color in self.color_set],
+            "topics": [model_to_dict(topics) for topics in self.affinitytopic_set],
+            "draw_fn_name": self.draw_fn_name,
+            "current_drawing_player": model_to_dict(
+                self.player_set.where(Player.current == True).first()
+            ),
+        }
 
 
 class InGameModel(Model):

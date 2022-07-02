@@ -44,7 +44,7 @@ class GameRunner(ABC):
             if not self.game.active():
                 self.logger.info("Game has ended")
                 return
-            self.logger.info("Looping")
+            # self.logger.info("Looping")
             time.sleep(0.1)
             done = True
             for player in self.players:
@@ -52,9 +52,6 @@ class GameRunner(ABC):
                     self.invoke_player_action(player, card_instance)
                     done = False
             if done:
-                Player.update(sequence=Player.sequence + 100).where(
-                    Player.id_ == drawing_player.id_
-                )
                 break
 
     def do_round(self, drawing_player: Player):

@@ -97,6 +97,7 @@ class WebsocketGameRunner(GameRunner):
             },
             event="play_card",
         )
+        self.send_to_game(self.game, {"player_name": player.name}, event="whos_turn")
 
     def do_round(self, *args, **kwargs):
         """Sleeps socket things"""
@@ -111,8 +112,9 @@ class WebsocketGameRunner(GameRunner):
         self.background_tasks[self.name] = self
 
     def exit(self):
-        self.thread.join()
-        self.background_tasks.pop(self.name)
+        self.send_to_game(self.game, None, "endgame")
+        if self.name in self.background_tasks:
+            self.background_tasks.pop(self.name)
         close_room(self.name)
 
     def perform_action(self, player_name, action, **kwargs):
@@ -188,8 +190,20 @@ def index():
 
 
 @socketio.event
+def about_game(message):
+    """Returns info about a game"""
+    # TODO authenticate
+    game_name = message["game"]
+    runner = WebsocketGameRunner.get_by_name(game_name)
+    if runner:
+        runner.send_reply(runner.game.about(), event="about")
+    else:
+        WebsocketGameRunner.send_reply(f"Game not found {game_name}", event="about")
+
+
+@socketio.event
 def join_game(message):
-    """Takes a player name and game room name. Joins the game. The game needs
+    """Takes a player name and game name. Joins the game. The game needs
     to be created with another API"""
     game_name = message["game"]
     player_name = message["player"]
@@ -203,7 +217,7 @@ def join_game(message):
         join_room(game_name)
         runner.send_reply(f"Joined game {game_name}")
     else:
-        WebsocketGameRunner.send_reply(f"Room not found {game_name}")
+        WebsocketGameRunner.send_reply(f"Game not found {game_name}")
 
 
 @socketio.event

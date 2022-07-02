@@ -33,6 +33,7 @@ class Player(InGameModel):
     sequence = peewee.IntegerField(null=False, default=1)
 
     client_id = peewee.CharField(null=True)
+    current = peewee.BooleanField(default=False)
 
     class Meta:
         # Unique together
