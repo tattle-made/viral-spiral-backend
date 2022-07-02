@@ -64,12 +64,9 @@ class Player(InGameModel):
         from .card import CardInstance
         from .card_queue import PlayerCardQueue
 
-        to_card_instance = CardInstance.create(
-            card=card_instance.card, from_=card_instance, player=self
-        )
-        PlayerCardQueue.queue(to_card_instance)
+        PlayerCardQueue.queue(card_instance)
 
-    def action_keep_card(self, card_instance_id: str, to: str):
+    def action_keep_card(self, card_instance_id: str):
         """Remove this card from the queue"""
         # TODO check if this action is allowed
         from .card_queue import PlayerCardQueue
@@ -93,7 +90,6 @@ class Player(InGameModel):
             CardInstance.id_ == card_instance_id
         ).first()
 
-        breakpoint()
         if to == "all":
             if self.powers.where(self.__class__.name == VIRAL_SPIRAL).count() == 1:
                 to_players = self.__class__.select()
@@ -108,13 +104,19 @@ class Player(InGameModel):
             to_players = [player]
 
         # Increase the original player's score
-        original_player = card_instance.card.original_player.update(
-            score=Player.score + 1
-        )
+        Player.update(score=Player.score + 1).where(
+            Player.id_ == card_instance.card.original_player_id
+        ).execute()
 
         # Trigger the receive card events
         for player in to_players:
-            player.event_receive_card(card_instance)
+            to_card_instance = CardInstance.create(
+                card=card_instance.card,
+                from_=card_instance,
+                player=player,
+                game=self.game,
+            )
+            player.event_receive_card(to_card_instance)
 
         # Dequeue this card
         from .card_queue import PlayerCardQueue
@@ -140,11 +142,11 @@ class Player(InGameModel):
         are queued"""
         from .card_queue import PlayerCardQueue
 
-        if self.card_queue_items.count() == 0:
-            return None
+        query = self.card_queue_items.where(PlayerCardQueue.active == True)
 
-        oldest = self.card_queue_items.order_by(PlayerCardQueue.idx).first()
-        return oldest.card_instance
+        oldest = query.order_by(PlayerCardQueue.idx).first()
+        if oldest:
+            return oldest.card_instance
 
     def perform_action(self, action: str, **kwargs):
         """Takes a string `action` which is the name of the function to

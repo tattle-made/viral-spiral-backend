@@ -46,11 +46,8 @@ class GameRunner(ABC):
                 return
             self.logger.info("Looping")
             time.sleep(0.1)
-            queued = [player.get_queued_card_instance() for player in self.players]
-            pending = any([bool(ci) for ci in queued])
             done = True
             for player in self.players:
-                card_instance = player.get_queued_card_instance()
                 if (card_instance := player.get_queued_card_instance()) is not None:
                     self.invoke_player_action(player, card_instance)
                     done = False

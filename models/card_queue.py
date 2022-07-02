@@ -44,6 +44,6 @@ class PlayerCardQueue(InGameModel):
     @classmethod
     def dequeue(cls, card_instance):
         """Sets a card queue instance to active == false"""
-        cls.update(active=False).where(
-            cls.card_instance == card_instance & cls.active == True
-        )
+        cls.update(active=False).where(cls.card_instance == card_instance).where(
+            cls.active == True
+        ).execute()
