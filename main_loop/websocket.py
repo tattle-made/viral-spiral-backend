@@ -208,7 +208,8 @@ def get_queued_card(message):
         if card:
             runner.send_reply(model_to_dict(card))
             return
-    runner.send_reply("No card")
+        runner.send_reply("No card")
+    WebsocketGameRunner.send_reply("No Game found")
 
 
 @socketio.event
