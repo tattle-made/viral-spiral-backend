@@ -1,5 +1,5 @@
 """Easy imports for models"""
-from .base import Game, db, json_dumps, json_loads
+from .base import Game, db
 from .card import Card, CardInstance
 from .player import Player, PlayerInitialBias, PlayerInitialAffinity
 from .counters import AffinityTopic, Color

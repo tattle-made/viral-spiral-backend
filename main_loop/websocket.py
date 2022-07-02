@@ -12,7 +12,7 @@ from flask_socketio import (
 )
 from playhouse.shortcuts import model_to_dict
 
-from models import Game, Player, Card, json_dumps
+from models import Game, Player, Card
 
 from main_loop.base import GameRunner
 
@@ -206,7 +206,7 @@ def get_queued_card(message):
     if runner:
         card = runner.get_queued_card(player_name)
         if card:
-            runner.send_reply(json_dumps(model_to_dict(card)))
+            runner.send_reply(model_to_dict(card))
             return
     runner.send_reply("No card")
 

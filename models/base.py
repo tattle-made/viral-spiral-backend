@@ -16,34 +16,15 @@ db = peewee.PostgresqlDatabase(
 )
 dataset = DataSet(db)
 
-model_id_generator = uuid.uuid4
 
-
-class UUIDSafeJSONEncoder(json.JSONEncoder):
-    """Converts UUID into str"""
-
-    def default(self, o):
-        if isinstance(o, uuid.UUID):
-            return o.urn
-
-
-def json_loads(the_str, *args, **kwargs):
-    def hook(obj):
-        if isinstance(obj, str) and obj.startswith("urn:uuid"):
-            return uuid.UUID(obj)
-
-    return json.loads(the_str, *args, object_hook=hook, **kwargs)
-
-
-def json_dumps(the_dict, *args, **kwargs):
-
-    return json.dumps(the_dict, *args, cls=UUIDSafeJSONEncoder, **kwargs)
+def model_id_generator():
+    return uuid.uuid4().hex
 
 
 class Model(peewee.Model):
-    """Base model with automatic UUIDs"""
+    """Base model with automatic IDs"""
 
-    id_ = peewee.UUIDField(primary_key=True, default=model_id_generator)
+    id_ = peewee.CharField(primary_key=True, default=model_id_generator)
 
     class Meta:
         database = db
