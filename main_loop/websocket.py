@@ -177,7 +177,7 @@ def background_thread():
         count += 1
         if count % (ticker_interval_secs * 10) == 0:
             socketio.emit(
-                "text_response", {"data": "Server generated event", "count": count}
+                "text_response", {"data": "heartbeat", "count": count}
             )
         if count % (action_interval_secs * 10) == 0:
             WebsocketGameRunner.flush_emit_queue()
