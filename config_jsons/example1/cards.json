@@ -1,7 +1,14 @@
 [
     {
         "title": "card1",
-        "description": "hello world"
+        "description": "hello world",
+        "fakes": [
+            {
+                "title": "Fake card1",
+                "description": "hello saturn",
+                "fake": true,
+            }
+        ]
     },
     {
         "title": "card2",

@@ -47,3 +47,14 @@ class PlayerCardQueue(InGameModel):
         cls.update(active=False).where(cls.card_instance == card_instance).where(
             cls.active == True
         ).execute()
+
+    @classmethod
+    def discard_card(cls, card):
+        """Dequeues all instances for a given card"""
+        ids = [
+            x.id_
+            for x in cls.select(cls.id_)
+            .join(CardInstance)
+            .where(CardInstance.card == card)
+        ]
+        cls.update(acive=False).where(cls.id_.in_(ids))

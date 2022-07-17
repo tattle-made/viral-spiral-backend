@@ -33,16 +33,22 @@ class Model(peewee.Model):
         database = db
 
     @classmethod
-    def import_from_json(cls, json_path, defaults=None):
-        """Can provid a JSON defaults dict"""
+    def import_from_json(cls, json_dict=None, json_path=None, defaults=None):
+        """
+        Required: Either a json dict containing the objects or a path to a json
+        file.
+        Optional: Can provide a JSON defaults dict"""
         # TODO optimise this
         objects = []
-        with open(json_path) as infile:
-            for dict_ in json.load(infile):
-                if defaults:
-                    dict_.update(defaults)
-                obj = cls.create(**dict_)
-                objects.append(obj)
+        if not json_dict:
+            with open(json_path) as infile:
+                json_dict = json.load(infile)
+        for dict_ in json_dict:
+            if defaults:
+                dict_.update(defaults)
+            obj = cls.create(**dict_)
+            objects.append(obj)
+        return objects
 
     @classmethod
     def export_to_file(cls, format, output_path):
@@ -108,7 +114,9 @@ class Game(Model):
                 name=player_name, color=color, game=game, sequence=sequences[idx]
             )
 
-        Card.import_from_json(cards_filepath, defaults={"game_id": str(game.id_)})
+        Card.import_from_json(
+            json_path=cards_filepath, defaults={"game_id": str(game.id_)}
+        )
 
         return game
 

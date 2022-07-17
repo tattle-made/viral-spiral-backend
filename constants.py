@@ -9,5 +9,7 @@ VIRAL_SPIRAL_BIAS_COUNT = 7
 # cancel power
 CANCELLING_AFFINITY_COUNT = 3
 
+# If bias against any topic reaches 3, the player receives the fake news power
+FAKE_NEWS_BIAS_COUNT = 3
 
 ACTIVE_STR = "active"

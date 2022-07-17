@@ -3,6 +3,7 @@ from constants import (
     VIRAL_SPIRAL_AFFINITY_COUNT,
     VIRAL_SPIRAL_BIAS_COUNT,
     CANCELLING_AFFINITY_COUNT,
+    FAKE_NEWS_BIAS_COUNT,
 )
 from .base import InGameModel, Round
 from .counters import AffinityTopic, Color
@@ -202,6 +203,50 @@ class Player(InGameModel):
             CancelVote.cancel_status_id == cancel_status_id
         ).update(vote=vote)
 
+    def action_fake_news(self, card_instance_id: str, fake_card_id: str):
+        """Convert a card into fake news"""
+        from .card import Card, CardInstance
+        from .powers import PlayerPower, FAKE_NEWS
+
+        if not PlayerPower.get_latest(name=FAKE_NEWS, player=self).active:
+            raise NotAllowed("Fake news power missing")
+
+        card_instance = self.card_instances.where(
+            CardInstance.id_ == card_instance_id
+        ).first()
+        if not card_instance:
+            raise NotFound(f"Card instance not found {card_instance_id}")
+
+        fake_card = card_instance.card.fakes.where(Card.id_ == fake_card_id).first()
+        if not fake_card:
+            raise NotFound(f"Fake card not found {fake_card_id}")
+
+        card_instance.create_fake_news(fake=fake_card)
+
+    def action_mark_as_fake(self, card_instance_id: str):
+        """Mark a card as fake after fact checking"""
+        from .card import Card, CardInstance
+
+        card_instance = self.card_instances.where(
+            CardInstance.id_ == card_instance_id
+        ).first()
+        if not card_instance:
+            raise NotFound(f"Card instance not found {card_instance_id}")
+
+        if card_instance.card.fake:
+            # 1. Deduct points of last player to share this card
+            Player.update(score=Player.score - 1).where(
+                Player.id_ == card_instance.from_.player.id
+            ).execute()
+            # 2. Discard all instanes of this (fake) card going around
+            from .card_queue import PlayerCardQueue
+
+            PlayerCardQueue.discard_card(card_instance.card)
+            card_instance.discarded = True
+            card_instance.save()
+            card_instance.card.discarded = True
+            card_instance.card.save()
+
     def all_actions(self):
         """Utility function to return all possible actions"""
         return [
@@ -272,3 +317,11 @@ class Player(InGameModel):
                 has_cancel = True
                 break
         PlayerPower.update(name=CANCEL, player=self, active=has_cancel)
+
+        # Fake News
+        has_fake_news = False
+        for color in self.game.color_set:
+            if abs(self.bias(against=color)) >= FAKE_NEWS_BIAS_COUNT:
+                has_fake_news = True
+                break
+        PlayerPower.update(name=FAKE_NEWS, player=self, active=has_fake_news)
