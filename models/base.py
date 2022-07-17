@@ -9,6 +9,8 @@ from playhouse.dataset import DataSet
 from playhouse.shortcuts import model_to_dict
 import peeweedbevolve
 
+from constants import PLAYER_WIN_SCORE
+
 # TODO shift these to environment variables
 db = peewee.MySQLDatabase(
     "tattleviralspiral",
@@ -65,7 +67,10 @@ class Game(Model):
 
     def active(self):
         # TODO implement this
-        return self.round_set.count() <= 5
+        for player in self.player_set:
+            if player.score >= PLAYER_WIN_SCORE:
+                return False
+        return True
 
     @property
     def current_round(self):
