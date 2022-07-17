@@ -5,7 +5,7 @@ import sys
 import time
 from abc import ABC, abstractmethod
 from typing import Callable
-from models import Game, Player, CardInstance
+from models import Game, Player, CardInstance, CancelStatus
 
 
 class GameRunner(ABC):
@@ -49,6 +49,9 @@ class GameRunner(ABC):
             time.sleep(0.1)
             done = True
             for player in self.players:
+                # TODO see if you can optimise this in a single query
+                if CancelStatus.cancelled(player):
+                    continue
                 if (card_instance := player.get_queued_card_instance()) is not None:
                     self.invoke_player_action(player, card_instance)
                     done = False
@@ -69,6 +72,5 @@ class GameRunner(ABC):
         while self.game.active():
             for player in self.players.order_by(Player.sequence):
                 self.do_round(player)
-                self.game.rounds += 1
                 self.game.save()
         self.exit()

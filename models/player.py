@@ -1,6 +1,10 @@
 import peewee
-from constants import VIRAL_SPIRAL_AFFINITY_COUNT, VIRAL_SPIRAL_BIAS_COUNT
-from .base import InGameModel
+from constants import (
+    VIRAL_SPIRAL_AFFINITY_COUNT,
+    VIRAL_SPIRAL_BIAS_COUNT,
+    CANCELLING_AFFINITY_COUNT,
+)
+from .base import InGameModel, Round
 from .counters import AffinityTopic, Color
 from exceptions import NotAllowed, NotFound
 
@@ -177,6 +181,19 @@ class Player(InGameModel):
         if keep_card_instance_id:
             self.action_keep_card(keep_card_instance_id)
 
+    def action_initiate_cancel(self, against: str =None):
+        """Initiates a round of voting to cancel a player.
+        Provide the name of the player to cancel"""
+        from .powers import CancelStatus, CANCEL
+
+        if not PlayerPower.get_latest(name=CANCEL, player=self).active:
+            raise NotAllowed("Cancel power missing")
+
+        player = self.game.player_set.where(Player.name == against).first()
+        if not player:
+            raise NotFound("Player does not exist {against}")
+        CancelStatus.initiate(initiator=self, against=player)
+
     def all_actions(self):
         """Utility function to return all possible actions"""
         return [
@@ -214,6 +231,8 @@ class Player(InGameModel):
         """Updates the powers of this player"""
         from .powers import VIRAL_SPIRAL, CANCEL, FAKE_NEWS, PlayerPower
 
+        # TODO Optimise this to reuse the computations across powers
+
         # Viral Spiral
         viral_spiral_affinity_check = False
         viral_spiral_bias_check = False
@@ -227,3 +246,11 @@ class Player(InGameModel):
                 break
         has_viral_spiral = viral_spiral_affinity_check and viral_spiral_bias_check
         PlayerPower.update(name=VIRAL_SPIRAL, player=self, active=has_viral_spiral)
+
+        # Cancel
+        has_cancel = False
+        for topic in self.game.affinitytopic_set:
+            if abs(self.affinity(towards=topic)) >= CANCELLING_AFFINITY_COUNT:
+                has_cancel = True
+                break
+        PlayerPower.update(name=CANCEL, player=self, active=has_cancel)

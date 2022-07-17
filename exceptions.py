@@ -7,3 +7,7 @@ class NotAllowed(Exception):
 
 class NotFound(Exception):
     pass
+
+
+class DuplicateAction(Exception):
+    pass

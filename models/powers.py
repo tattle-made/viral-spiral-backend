@@ -1,8 +1,11 @@
 """List of powers"""
 
 import peewee
-from .base import InGameModel, Game, db
+from .base import InGameModel, Game, Round, db, model_id_generator
 from .player import Player
+
+from constants import ACTIVE_STR
+from exceptions import NotFound, DuplicateAction
 
 VIRAL_SPIRAL = "viral_spiral"
 CANCEL = "cancel"
@@ -47,3 +50,61 @@ class PlayerPower(InGameModel):
             cls.create(
                 name=name, player=player, active=active, game=player.game, idx=new_idx
             )
+
+
+class CancelStatus(InGameModel):
+    """State variables for cancelling a player for a round"""
+
+    round = peewee.ForeignKeyField(Round)
+    against = peewee.ForeignKeyField(Player)
+    initiator = peewee.ForeignKeyField(Player)
+
+    class Meta:
+        # Unique together
+        indexes = ((("round", "against", "initiator", "game"), True),)
+
+    @classmethod
+    def cancelled(cls, player: Player):
+        """Returns True if this player has been cancelled in the active round
+        else False"""
+        votes = (
+            CancelVote.select()
+            .join(cls)
+            .where(
+                cls.against == player,
+                cls.game == player.game,
+                cls.round == player.game.current_round(),
+                CancelVote.vote == True,
+            )
+        )
+        grouped = votes.select(
+            cls.initiator, peewee.fn.COUNT(CancelVote.id_).alias("votes")
+        ).group_by(cls.initiator)
+
+        for row in grouped:
+            if (
+                row.votes
+                / player.game.player_set.where(Player.color == player.color).count()
+                >= 0.5
+            ):
+                return True
+        return False
+
+    @classmethod
+    def initiate(cls, initiator: Player, against: Player):
+        cls.create(
+            round=initiator.game.current_round,
+            against=against,
+            initiator=initiator,
+            game=initiator.game,
+        )
+
+
+class CancelVote(InGameModel):
+    cancel_satus = peewee.ForeignKeyField(CancelStatus)
+    voter = peewee.ForeignKeyField(Player)
+    vote = peewee.BooleanField()
+
+    class Meta:
+        # Unique together
+        indexes = ((("cancel_satus", "voter", "game"), True),)

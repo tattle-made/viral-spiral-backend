@@ -54,13 +54,24 @@ class Game(Model):
     """A game instance"""
 
     name = peewee.CharField(unique=True)
-    rounds = peewee.IntegerField(default=0)
     draw_fn_name = peewee.CharField(unique=False)
     password = peewee.CharField(unique=False)
 
     def active(self):
         # TODO implement this
-        return self.rounds <= 5
+        return self.round_set.count() <= 5
+
+    @property
+    def current_round(self):
+        round_ = self.round_set.order_by(Round.idx.desc()).first()
+        if not round_:
+            round_ = Round(game=self, idx=0)  # 0 means not started
+        return round_
+
+    def add_round(self):
+        """Adds a round to this came"""
+        with db.atomic():
+            round_ = Round.create(game=self, idx=self.current_round.idx + 1)
 
     @classmethod
     def new(
@@ -105,6 +116,7 @@ class Game(Model):
         from .player import Player
         from deck_generators import GENERATORS
 
+        self.add_round()
         draw_fn = GENERATORS.get(self.draw_fn_name)
         Player.update(current=False).where(Player.game == self).execute()
         Player.update(sequence=Player.sequence + 100, current=True).where(
@@ -144,3 +156,13 @@ class InGameModel(Model):
     """A Model linked to a game"""
 
     game = peewee.ForeignKeyField(Game)
+
+
+class Round(InGameModel):
+    """A Round of a game"""
+
+    idx = peewee.IntegerField()
+
+    class Meta:
+        # Unique together
+        indexes = ((("idx", "game"), True),)
