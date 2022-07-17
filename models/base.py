@@ -10,11 +10,12 @@ from playhouse.shortcuts import model_to_dict
 import peeweedbevolve
 
 # TODO shift these to environment variables
-db = peewee.PostgresqlDatabase(
+db = peewee.MySQLDatabase(
     "tattleviralspiral",
     host="localhost",
-    port=5432,
-    user="postgres",
+    port=3306,
+    user="root",
+    password="helloworld",
 )
 dataset = DataSet(db)
 
@@ -132,6 +133,11 @@ class Game(Model):
                 self.player_set.where(Player.current == True).first()
             ),
         }
+
+    def update_powers(self):
+        """Updates powers of each of the players in this game"""
+        for player in self.player_set:
+            player.update_powers()
 
 
 class InGameModel(Model):
