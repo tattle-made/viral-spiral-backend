@@ -194,6 +194,14 @@ class Player(InGameModel):
             raise NotFound("Player does not exist {against}")
         CancelStatus.initiate(initiator=self, against=player)
 
+    def action_vote_cancel(self, cancel_status_id, vote: bool = False):
+        """Vote True/False to cancel a player"""
+        from .powers import CancelVote
+
+        CancelVote.select().where(
+            CancelVote.cancel_status_id == cancel_status_id
+        ).update(vote=vote)
+
     def all_actions(self):
         """Utility function to return all possible actions"""
         return [
