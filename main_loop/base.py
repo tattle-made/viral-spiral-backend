@@ -5,7 +5,7 @@ import sys
 import time
 from abc import ABC, abstractmethod
 from typing import Callable
-from models import Game, Player, CardInstance, CancelStatus
+from models import Game, Player, CardInstance, CancelStatus, CancelVote
 
 
 class GameRunner(ABC):
@@ -38,6 +38,10 @@ class GameRunner(ABC):
         a web server, no need to do anything here"""
         pass
 
+    def invoke_vote(self, player: Player, pending_vote: CancelVote):
+        """Ask the player to vote for/against cancellation"""
+        pass
+
     def finish_round(self, drawing_player: Player):
         """Invokes actions and waits until no cards are queued"""
         while True:
@@ -54,6 +58,9 @@ class GameRunner(ABC):
                     continue
                 if (card_instance := player.get_queued_card_instance()) is not None:
                     self.invoke_player_action(player, card_instance)
+                    done = False
+                if (pending_vote := player.get_pending_cancel_vote()) is not None:
+                    self.invoke_vote(player, pending_vote)
                     done = False
             if done:
                 break

@@ -92,19 +92,36 @@ class CancelStatus(InGameModel):
 
     @classmethod
     def initiate(cls, initiator: Player, against: Player):
-        cls.create(
+        cancel_status = cls.create(
             round=initiator.game.current_round,
             against=against,
             initiator=initiator,
             game=initiator.game,
         )
 
+        CancelVote.initiate(cancel_status=cancel_status, initiator=initiator)
+
 
 class CancelVote(InGameModel):
-    cancel_satus = peewee.ForeignKeyField(CancelStatus)
+    cancel_status = peewee.ForeignKeyField(CancelStatus)
     voter = peewee.ForeignKeyField(Player)
     vote = peewee.BooleanField()
 
     class Meta:
         # Unique together
-        indexes = ((("cancel_satus", "voter", "game"), True),)
+        indexes = ((("cancel_status", "voter", "game"), True),)
+
+    @classmethod
+    def initiate(cls, cancel_status: CancelStatus, initiator: Player):
+        # TODO use multi put
+        for player in player.game.player_set.where(Player.color == player.color):
+            voted = True if player.id_ == initiator.id_ else None
+            cls.create(cancel_status=cancel_status, voter=player, voted=voted)
+
+    @classmethod
+    def pending_votes(cls, round_: Round):
+        return (
+            cls.select()
+            .join(CancelStatus)
+            .where(CancelStatus.round == round_, cls.game == round_.game)
+        )

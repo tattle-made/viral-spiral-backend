@@ -14,7 +14,7 @@ from flask_socketio import (
 )
 from playhouse.shortcuts import model_to_dict
 
-from models import Game, Player, Card, CardInstance
+from models import Game, Player, Card, CardInstance, CancelVote
 
 from main_loop.base import GameRunner
 
@@ -99,6 +99,14 @@ class WebsocketGameRunner(GameRunner):
         )
         self.send_to_game(self.game, {"player_name": player.name}, event="whos_turn")
 
+    def invoke_vote(self, player: Player, pending_vote: CancelVote):
+
+        self.send_to_player(
+            player,
+            {"pending_vote": model_to_dict(pending_vote)},
+            event="vote_cancel",
+        )
+
     def do_round(self, *args, **kwargs):
         """Sleeps socket things"""
         socketio.sleep(1)
@@ -176,9 +184,7 @@ def background_thread():
         socketio.sleep(0.1)
         count += 1
         if count % (ticker_interval_secs * 10) == 0:
-            socketio.emit(
-                "text_response", {"data": "heartbeat", "count": count}
-            )
+            socketio.emit("text_response", {"data": "heartbeat", "count": count})
         if count % (action_interval_secs * 10) == 0:
             WebsocketGameRunner.flush_emit_queue()
 
@@ -285,12 +291,14 @@ def player_action(message):
     runner = WebsocketGameRunner.get_by_name(game_name)
     if runner:
         runner.perform_action(player_name, action, **kwargs)
+        data = {"message": f"Performed action {action}", "original_data": message}
         emit(
             "text_response",
-            {"data": f"Performed action {action}"},
+            data,
             to=request.sid,
         )
     else:
+        # TODO add original message here
         emit(
             "text_response",
             {"data": "Failed to perform {action}"},

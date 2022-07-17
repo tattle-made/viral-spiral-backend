@@ -181,10 +181,10 @@ class Player(InGameModel):
         if keep_card_instance_id:
             self.action_keep_card(keep_card_instance_id)
 
-    def action_initiate_cancel(self, against: str =None):
+    def action_initiate_cancel(self, against: str = None):
         """Initiates a round of voting to cancel a player.
         Provide the name of the player to cancel"""
-        from .powers import CancelStatus, CANCEL
+        from .powers import CancelStatus, CANCEL, PlayerPower
 
         if not PlayerPower.get_latest(name=CANCEL, player=self).active:
             raise NotAllowed("Cancel power missing")
@@ -218,6 +218,16 @@ class Player(InGameModel):
         oldest = query.order_by(PlayerCardQueue.idx).first()
         if oldest:
             return oldest.card_instance
+
+    def get_pending_cancel_vote(self):
+        """Returns the oldest pending vote (for cancellation) for this player"""
+        from .powers import CancelVote
+
+        return (
+            CancelVote.pending_votes(round_=self.game.current_round())
+            .where(CancelVote.voter == self)
+            .first()
+        )
 
     def perform_action(self, action: str, **kwargs):
         """Takes a string `action` which is the name of the function to
