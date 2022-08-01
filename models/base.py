@@ -30,6 +30,12 @@ class Model(peewee.Model):
     """Base model with automatic IDs"""
 
     id_ = peewee.CharField(primary_key=True, default=model_id_generator)
+    created_at = peewee.DateTimeField(
+        constraints=[peewee.SQL("DEFAULT CURRENT_TIMESTAMP")]
+    )
+    created_at = peewee.DateTimeField(
+        constraints=[peewee.SQL("ON UPDATE CURRENT_TIMESTAMP")]
+    )
 
     class Meta:
         database = db
