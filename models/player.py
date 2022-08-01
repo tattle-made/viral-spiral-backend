@@ -152,6 +152,14 @@ class Player(InGameModel):
             Player.id_ == card_instance.card.original_player_id
         ).execute()
 
+        # If this is a biased card, decrease the score of all players of the
+        # community against which this card is biased
+        # This happens only for the first pass of this card
+        if card_instance.card.bias_against is not None and card_instance.from_ is None:
+            Player.update(score=Player.score - 1).where(
+                Player.color == card_instance.card.bias_against
+            )
+
     def action_viral_spiral(
         self, keep_card_instance_id: str, pass_card_instance_id: str
     ):
