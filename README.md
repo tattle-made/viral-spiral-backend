@@ -8,17 +8,18 @@ All command examples are from the repo root
 - Install postgresql locally
 - Create a database called "tattleviralspiral"
     - You can do this by running `psql -U postgres` and then `create databaset tattleviralspiral`
-- Install python3 and create a virtualenv
+- Install python3 and create a virtualenv using pipenv
 ```
-python3 -m venv ./venv
+pipenv shell
 ```
 - Activate the environment
 ```
+pipenv shell
 source ./activate_env.sh
 ```
 - Install dependencies
 ```
-pip install -r requirements.txt
+pipenv sync
 ```
 - Initialize the db
 ```
@@ -28,6 +29,7 @@ python setup.py
 ## Run the server
 - Activate the environment and run the server
 ```
+pipenv shell
 source ./activate_env.sh
 python main_loop/websocket.py
 ```
