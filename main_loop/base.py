@@ -11,6 +11,7 @@ from models import Game, Player, CardInstance, CancelStatus, CancelVote
 class GameRunner(ABC):
     def __init__(self, game: Game, logger: logging.Logger = None):
         self.game = game
+        game.runner = self
         self.default_log_formatter = logging.Formatter(
             f"{self.name} : %(asctime)s - %(name)s - %(levelname)s - %(message)s"
         )
@@ -81,3 +82,13 @@ class GameRunner(ABC):
                 self.do_round(player)
                 self.game.save()
         self.exit()
+
+    @classmethod
+    def send_to_player(cls, player: Player, data: dict = None, event: str = None):
+        """Send a message to a player"""
+        pass
+
+    @classmethod
+    def send_to_game(cls, game: Game, data: dict = None, event: str = None):
+        """Send a message to all players in the game"""
+        pass

@@ -4,8 +4,10 @@ from constants import (
     VIRAL_SPIRAL_BIAS_COUNT,
     CANCELLING_AFFINITY_COUNT,
     FAKE_NEWS_BIAS_COUNT,
+    SOCKET_EVENT_ENC_SEARCH_RESULT,
 )
 from .base import InGameModel, Round
+from .encyclopedia import Article
 from .counters import AffinityTopic, Color
 from exceptions import NotAllowed, NotFound
 
@@ -246,6 +248,22 @@ class Player(InGameModel):
             card_instance.save()
             card_instance.card.discarded = True
             card_instance.card.save()
+
+    def action_encyclopedia_search(self, keyword):
+        """Searches for a keyword in the encyclopedia and returns relevant
+        articles"""
+
+        articles = Article.select(Article.id_, Article.content).where(
+            Article.content_lower.contains(keyword.lower())
+        )
+        self.game.runner.send_to_player(
+            player=self,
+            data={
+                "keyword": keyword,
+                "articles": articles.dicts(),
+            },
+            event=SOCKET_EVENT_ENC_SEARCH_RESULT,
+        )
 
     def all_actions(self):
         """Utility function to return all possible actions"""

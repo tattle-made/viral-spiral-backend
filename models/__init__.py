@@ -5,6 +5,7 @@ from .player import Player, PlayerInitialBias, PlayerInitialAffinity
 from .counters import AffinityTopic, Color
 from .powers import PlayerPower, CancelStatus, CancelVote
 from .card_queue import PlayerCardQueue
+from .encyclopedia import Article
 
 ALL_MODELS = [
     Game,

@@ -22,7 +22,7 @@ def test_without_sockets():
     print("Running server")
     run()
     # game = Game.select().where(Game.name==data["game"]).first()
-    # Card.import_from_json("x.json", defaults={"game_id": str(game.id_)})
+    # Card.import_from_json(json_path="x.json", defaults={"game_id": str(game.id_)})
 
 
 if __name__ == "__main__":
