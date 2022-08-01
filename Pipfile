@@ -1,0 +1,25 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+flask = "*"
+flask-socketio = "*"
+peewee = "*"
+psycopg2 = "*"
+pyparsing = "*"
+connexion = "*"
+swagger-server = {path = "./packages/python-flask-server-generated.zip"}
+six = "*"
+peewee-db-evolve = "*"
+mysql = "*"
+
+[dev-packages]
+black = "*"
+pylint = "*"
+peewee-db-evolve = "*"
+pylint-peewee = "*"
+
+[requires]
+python_version = "3.9"
