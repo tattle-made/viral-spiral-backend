@@ -25,8 +25,8 @@ class OutgoingMessage(object):
         self.name = name
         self.message_template = message_template
 
-        for receiver in self.can_send_to:
-            assert receiver in TO_OPTIONS
+        for receiver in can_send_to:
+            assert receiver in self.TO_OPTIONS
 
         self.can_send_to = can_send_to
 
@@ -36,8 +36,8 @@ ERROR_GENERIC = OutgoingMessage(
     can_send_to=OutgoingMessage.TO_ANY,
     message_template={
         "original_message": "{original_message}",
-        "error": "{error message}"
-    }
+        "error": "{error message}",
+    },
 )
 
 ERROR_GAME_NOT_FOUND = OutgoingMessage(
@@ -58,12 +58,59 @@ ERROR_GAME_ALREADY_JOINED = OutgoingMessage(
     },
 )
 
+NOTIF_PLAY_CARD = OutgoingMessage(
+    name="play_card",
+    can_send_to=[OutgoingMessage.TO_PLAYER],
+    message_template={
+        "data": {
+            "card_instance": "{details about the card to play}",
+            "recipients": "{list of names of players who can receive this card}",
+        },
+    },
+)
+
+NOTIF_VOTE = OutgoingMessage(
+    name="vote_cancel",
+    can_send_to=[OutgoingMessage.TO_PLAYER],
+    message_template={
+        "data": {
+            # The ID of the cancel status object is sent here - which is
+            # required to perform the vote action
+            "pending_vote": "{details about who to vote for cancellation}",
+        },
+    },
+)
+
+NOTIF_FINISHED_ROUND = OutgoingMessage(
+    name="end_of_round",
+    can_send_to=[OutgoingMessage.TO_GAME],
+    message_template={"data": "Finished a round"},
+)
+
+NOTIF_END_GAME = OutgoingMessage(
+    name="endgame",
+    can_send_to=[OutgoingMessage.TO_GAME],
+    message_template={
+        "data": None,  # No message
+        # TODO display winner here
+    },
+)
+
 REPLY_ABOUT_GAME = OutgoingMessage(
     name="about",
     can_send_to=[OutgoingMessage.TO_SENDER, OutgoingMessage.TO_PLAYER],
     message_template={
         "original_message": "{original_message}",
         # TODO add more details
+    },
+)
+
+REPLY_CREATED_GAME = OutgoingMessage(
+    name="created_game",
+    can_send_to=[OutgoingMessage.TO_SENDER],
+    message_template={
+        "original_message": "{original_message}",
+        "data": "Create game: {game_name}",
     },
 )
 
@@ -82,7 +129,7 @@ ERROR_NO_QUEUED_CARD = OutgoingMessage(
     message_template={
         "original_message": "{original_message}",
         "message": "No card queued",
-    }
+    },
 )
 
 REPLY_QUEUED_CARD = OutgoingMessage(
@@ -91,7 +138,7 @@ REPLY_QUEUED_CARD = OutgoingMessage(
     message_template={
         "original_message": "{original_message}",
         "data": "{dictionary_of_queued_card}",
-    }
+    },
 )
 
 REPLY_PERFORMED_ACTION = OutgoingMessage(
@@ -100,20 +147,17 @@ REPLY_PERFORMED_ACTION = OutgoingMessage(
     message_template={
         "original_message": "{original_message}",
         "action": "{action}",
-    }
+    },
 )
 
 REPLY_ENCYCLOPEDIA_RESULT = OutgoingMessage(
     name="encyclopedia_search_result",
-    can_send_to=[OutgoingMessage.TO_PLAYER],  
+    can_send_to=[OutgoingMessage.TO_PLAYER],
     # We restrict to only players not to any sender
     message_template={
         "original_message": "{original_message}",
-        "data": {
-            "keyword": "{keyword}",
-            "articles": "{list of dicts of articles}"
-        }
-    }
+        "data": {"keyword": "{keyword}", "articles": "{list of dicts of articles}"},
+    },
 )
 EVENT_ABOUT_GAME = IncomingMessage(
     name="about_game",
@@ -123,13 +167,13 @@ EVENT_ABOUT_GAME = IncomingMessage(
 
 EVENT_JOIN_GAME = IncomingMessage(
     name="join_game",
-    message={"game": "{name_of_the_game}", "player": "{name_of_the_player}"},
+    message_template={"game": "{name_of_the_game}", "player": "{name_of_the_player}"},
     reply=[ERROR_GAME_NOT_FOUND, ERROR_GAME_ALREADY_JOINED, REPLY_JOINED_GAME],
 )
 
 EVENT_CREATE_GAME = IncomingMessage(
     name="create_game",
-    message={
+    message_template={
         "game": "{name_of_the_game}",
         "players": "{comma_seperated_player_list}",
         "colors_filepath": "{backend_filepath_of_colors_json_obj}",
@@ -143,43 +187,41 @@ EVENT_CREATE_GAME = IncomingMessage(
 
 EVENT_GET_QUEUED_CARD = IncomingMessage(
     name="get_queued_card",
-    message={
+    message_template={
         "game": "{name_of_the_game}",
         "player": "{name_of_the_player}",
-    }
-    reply=[ERROR_NO_QUEUED_CARD, ERROR_GAME_NOT_FOUND, REPLY_QUEUED_CARD]
+    },
+    reply=[ERROR_NO_QUEUED_CARD, ERROR_GAME_NOT_FOUND, REPLY_QUEUED_CARD],
 )
 
 PLAYER_ACTION_KEEP_CARD = IncomingMessage(
     name="player_action",
-    message={
+    message_template={
         "game": "{name_of_the_game}",
         "player": "{name_of_the_player}",
         "action": "keep_card",
-        "kwargs": {
-            "card_instance_id": "{ID of currently queued card}"
-        }
+        "kwargs": {"card_instance_id": "{ID of currently queued card}"},
     },
-    reply=[ERROR_GENERIC, REPLY_PERFORMED_ACTION]
+    reply=[ERROR_GENERIC, REPLY_PERFORMED_ACTION],
 )
 
 PLAYER_ACTION_PASS_CARD = IncomingMessage(
     name="player_action",
-    message={
+    message_template={
         "game": "{name_of_the_game}",
         "player": "{name_of_the_player}",
         "action": "pass_card",
         "kwargs": {
             "card_instance_id": "{ID of currently queued card to pass}",
             "to": "{name_of_card_recipient}",
-        }
+        },
     },
-    reply=[ERROR_GENERIC, REPLY_PERFORMED_ACTION]
+    reply=[ERROR_GENERIC, REPLY_PERFORMED_ACTION],
 )
 
 PLAYER_ACTION_VIRAL_SPIRAL = IncomingMessage(
     name="player_action",
-    message={
+    message_template={
         "game": "{name_of_the_game}",
         "player": "{name_of_the_player}",
         "action": "viral_spiral",
@@ -191,48 +233,48 @@ PLAYER_ACTION_VIRAL_SPIRAL = IncomingMessage(
             # (previously held) card, then keep_card_instance_id will be the
             # current card and pass_card_instance_id can be a previously held
             # card
-        }
+        },
     },
-    reply=[ERROR_GENERIC, REPLY_PERFORMED_ACTION]
+    reply=[ERROR_GENERIC, REPLY_PERFORMED_ACTION],
 )
 
 PLAYER_ACTION_INITIATE_CANCEL = IncomingMessage(
     name="player_action",
-    message={
+    message_template={
         "game": "{name_of_the_game}",
         "player": "{name_of_the_player}",
         "action": "initiate_cancel",
         "kwargs": {
             "against": "{name of player to cancel for this round}",
-        }
+        },
     },
-    reply=[ERROR_GENERIC, REPLY_PERFORMED_ACTION]
+    reply=[ERROR_GENERIC, REPLY_PERFORMED_ACTION],
 )
 
 PLAYER_ACTION_VOTE_CANCEL = IncomingMessage(
     name="player_action",
-    message={
+    message_template={
         "game": "{name_of_the_game}",
         "player": "{name_of_the_player}",
         "action": "vote_cancel",
         "kwargs": {
-            "cancel_status_id": "{ID of cancel status (sent to client as a message)}"
-            "vote": "{Boolean - True to cancel, false to not cancel}"
-        }
+            "cancel_status_id": "{ID of cancel status (sent to client as a message)}",
+            "vote": "{Boolean - True to cancel, false to not cancel}",
+        },
     },
-    reply=[ERROR_GENERIC, REPLY_PERFORMED_ACTION]
+    reply=[ERROR_GENERIC, REPLY_PERFORMED_ACTION],
 )
 
 PLAYER_ACTION_FAKE_NEWS = IncomingMessage(
     # Convert a card to fake news
     name="player_action",
-    message={
+    message_template={
         "game": "{name_of_the_game}",
         "player": "{name_of_the_player}",
         "action": "fake_news",
         "kwargs": {
-            "card_instance_id": "{ID of currently held card}"
-            "fake_card_id": "{ID of fake card to immitate}"
+            "card_instance_id": "{ID of currently held card}",
+            "fake_card_id": "{ID of fake card to immitate}",
             # All possible fake cards for a given card will be saved in the
             # backend for simplicity instead of generating new fake cards on
             # the fly. We can optimise this later.
@@ -240,35 +282,31 @@ PLAYER_ACTION_FAKE_NEWS = IncomingMessage(
             # on the fly.
             # If we are generating fake cards on the fly, then we need to take
             # those details as kwargs here
-        }
+        },
     },
-    reply=[ERROR_GENERIC, REPLY_PERFORMED_ACTION]
+    reply=[ERROR_GENERIC, REPLY_PERFORMED_ACTION],
 )
 
 PLAYER_ACTION_MARK_AS_FAKE = IncomingMessage(
     # Report a card as fake
     name="player_action",
-    message={
+    message_template={
         "game": "{name_of_the_game}",
         "player": "{name_of_the_player}",
         "action": "mark_as_fake",
-        "kwargs": {
-            "card_instance_id": "{ID of currently held card}"
-        }
+        "kwargs": {"card_instance_id": "{ID of currently held card}"},
     },
-    reply=[ERROR_GENERIC, REPLY_PERFORMED_ACTION]
+    reply=[ERROR_GENERIC, REPLY_PERFORMED_ACTION],
 )
 
 PLAYER_ACTION_ENCYCLOPEDIA_SEARCH = IncomingMessage(
     # Search for a keyword in the encyclopedia
     name="player_action",
-    message={
+    message_template={
         "game": "{name_of_the_game}",
         "player": "{name_of_the_player}",
         "action": "encyclopedia_search",
-        "kwargs": {
-            "keyword": "{ID of currently held card}"
-        }
+        "kwargs": {"keyword": "{ID of currently held card}"},
     },
-    reply=[ERROR_GENERIC, REPLY_ENCYCLOPEDIA_RESULT]
+    reply=[ERROR_GENERIC, REPLY_ENCYCLOPEDIA_RESULT],
 )
