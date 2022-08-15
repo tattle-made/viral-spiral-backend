@@ -1,25 +1,33 @@
-<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
-<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
-<link rel="stylesheet" href="https://cdn.form.io/formiojs/formio.full.min.css">
+<link
+  rel="stylesheet"
+  href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"
+/>
+<link
+  rel="stylesheet"
+  href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+/>
+<link
+  rel="stylesheet"
+  href="https://cdn.form.io/formiojs/formio.full.min.css"
+/>
 <script src="https://cdn.form.io/formiojs/formio.full.min.js"></script>
 
-Welcome to the alpha testing of Viral Spiral!
-
-This deck has 5 cards without any affinity or bias. This game supports 5
-rounds. After the end of 5 rounds, a winner will be declared.
+Welcome to the alpha testing of Viral Spiral! This deck has 5 cards without any
+affinity or bias. This game supports 5 rounds. After the end of 5 rounds, a
+winner will be declared.
 
 <table>
   <tr>
-    <td colspan=2>
+    <td colspan="2">
       <div id="action-form">Action form</div>
     </td>
-    <td colspan=2>
+    <td colspan="2">
       <h3>Your card to play</h3>
       <div id="play-card-div">
         <pre id="play-card-pre"></pre>
       </div>
     </td>
-    <td colspan=2>
+    <td colspan="2">
       <h3>Console</h3>
       <div>
         <pre id="console"></pre>
@@ -27,15 +35,15 @@ rounds. After the end of 5 rounds, a winner will be declared.
     </td>
   </tr>
   <tr>
-    <td colspan=2>
+    <td colspan="2">
       <h3>Create a game</h3>
       <div id="create-form">Create form</div>
     </td>
-    <td colspan=2>
+    <td colspan="2">
       <h3>Join a game</h3>
       <div id="join-form">Join form</div>
     </td>
-    <td colspan=2>
+    <td colspan="2">
       <h3>Current Game</h3>
       <pre id="current-game">Not Joined</pre>
       <div id="leave-form"></div>
@@ -46,290 +54,292 @@ rounds. After the end of 5 rounds, a winner will be declared.
 <!-- Forms stuff here -->
 <script>
   function doit() {
-      Formio.icons = 'fontawesome';
-      Formio.createForm(document.getElementById('create-form'), {
-          components: [
+    Formio.icons = "fontawesome";
+    Formio.createForm(document.getElementById("create-form"), {
+      components: [
+        {
+          type: "textfield",
+          key: "game",
+          label: "Game Name",
+          placeholder: "Game Name",
+          input: true,
+        },
+        {
+          type: "textfield",
+          key: "players",
+          label: "Players (comma separated)",
+          placeholder: "Players (comma separated)",
+          input: true,
+          tooltip: "Players (comma separated)",
+          description: "Players (comma separated)",
+        },
+        {
+          type: "textfield",
+          key: "password",
+          label: "Game Password",
+          placeholder: "game passwd",
+          input: true,
+          tooltip: "game passwd",
+          description: "game passwd",
+        },
+        {
+          type: "button",
+          action: "submit",
+          label: "create",
+          theme: "primary",
+        },
+      ],
+    }).then(function (form) {
+      form.nosubmit = true;
+      form.on("submit", function (submission) {
+        gameData = submission.data;
+        gameData.players = gameData.players.split(",");
+        delete gameData.submit;
+        gameData.topics_filepath = "config_jsons/example1/topics.json";
+        gameData.colors_filepath = "config_jsons/example1/colors.json";
+        gameData.draw_fn_name = "first";
+        gameData.cards_filepath = "config_jsons/example1/cards.json";
+        console.log("wew");
+        console.log(gameData);
+        socket.emit("create_game", gameData);
+        form.cancel("done");
+      });
+    });
+    Formio.createForm(document.getElementById("join-form"), {
+      components: [
+        {
+          type: "textfield",
+          key: "game",
+          label: "Game Name",
+          placeholder: "Game Name",
+          input: true,
+        },
+        {
+          type: "textfield",
+          key: "player",
+          label: "Player Name",
+          placeholder: "Your Player Name",
+          input: true,
+          tooltip: "Your Player Name",
+          description: "Your Player Name",
+        },
+        {
+          type: "textfield",
+          key: "password",
+          label: "Game Password",
+          placeholder: "game passwd",
+          input: true,
+          tooltip: "game passwd",
+          description: "game passwd",
+        },
+        {
+          type: "button",
+          action: "submit",
+          label: "join",
+          theme: "primary",
+        },
+      ],
+    }).then(function (form) {
+      form.nosubmit = true;
+      form.on("submit", function (submission) {
+        gameData = submission.data;
+        delete gameData.submit;
+        socket.emit("join_game", gameData);
+        // sessionStorage.setItem("player", gameData.player);
+        // sessionStorage.setItem("game", gameData.game);
+        window.player = gameData.player;
+        window.game = gameData.game;
+        form.cancel("done");
+      });
+    });
+    Formio.createForm(document.getElementById("action-form"), {
+      components: [
+        {
+          type: "select",
+          label: "Action",
+          key: "action",
+          placeholder: "Action",
+          data: {
+            values: [
               {
-                  type: 'textfield',
-                  key: 'game',
-                  label: 'Game Name',
-                  placeholder: 'Game Name',
-                  input: true,
-                },
+                value: "action_keep_card",
+                label: "Keep your card",
+              },
               {
-                  type: 'textfield',
-                  key: 'players',
-                  label: 'Players (comma separated)',
-                  placeholder: 'Players (comma separated)',
-                  input: true,
-                  tooltip: 'Players (comma separated)',
-                  description: 'Players (comma separated)'
-                },
-              {
-                  type: 'textfield',
-                  key: 'password',
-                  label: 'Game Password',
-                  placeholder: 'game passwd',
-                  input: true,
-                  tooltip: 'game passwd',
-                  description: 'game passwd'
-                },
-              {
-                  type: 'button',
-                  action: 'submit',
-                  label: 'create',
-                  theme: 'primary'
-                }
-            ]
-        }).then(function(form) {
-            form.nosubmit = true;
-            form.on('submit', function(submission) {
-                gameData = submission.data;
-                gameData.players = gameData.players.split(",");
-                delete(gameData.submit);
-                gameData.topics_filepath = "config_jsons/example1/topics.json";
-                gameData.colors_filepath = "config_jsons/example1/colors.json";
-                gameData.draw_fn_name = "first";
-                gameData.cards_filepath = "config_jsons/example1/cards.json";
-                console.log("wew");
-                console.log(gameData);
-                socket.emit(
-                    "create_game",
-                    gameData,
-                  )
-                form.cancel("done");
-              });
-          });
-      Formio.createForm(document.getElementById('join-form'), {
-          components: [
-              {
-                  type: 'textfield',
-                  key: 'game',
-                  label: 'Game Name',
-                  placeholder: 'Game Name',
-                  input: true,
-                },
-              {
-                  type: 'textfield',
-                  key: 'player',
-                  label: 'Player Name',
-                  placeholder: 'Your Player Name',
-                  input: true,
-                  tooltip: 'Your Player Name',
-                  description: 'Your Player Name'
-                },
-              {
-                  type: 'textfield',
-                  key: 'password',
-                  label: 'Game Password',
-                  placeholder: 'game passwd',
-                  input: true,
-                  tooltip: 'game passwd',
-                  description: 'game passwd'
-                },
-              {
-                  type: 'button',
-                  action: 'submit',
-                  label: 'join',
-                  theme: 'primary'
-                }
-            ]
-        }).then(function(form) {
-            form.nosubmit = true;
-            form.on('submit', function(submission) {
-                gameData = submission.data;
-                delete(gameData.submit);
-                socket.emit(
-                    "join_game",
-                    gameData,
-                  );
-                // sessionStorage.setItem("player", gameData.player);
-                // sessionStorage.setItem("game", gameData.game);
-                window.player = gameData.player;
-                window.game = gameData.game;
-                form.cancel("done");
-              });
-          });
-      Formio.createForm(document.getElementById("action-form"), {
-          "components": [
-              {
-                  type: "select",
-                  label: "Action",
-                  key: "action",
-                  placeholder: "Action",
-                  data: {
-                      values: [
-                          {
-                              value: "action_keep_card",
-                              label: "Keep your card"
-                            },
-                          {
-                              value: "action_pass_card",
-                              label: "Pass your card"
-                            },
-                        ]
-                    },
-                  dataSrc: "values",
-                  multiple: false,
-                  input: true
-                },
-              {
-                  type: 'textfield',
-                  key: 'to',
-                  label: 'To (player name)',
-                  placeholder: 'To (Player name)',
-                  input: true,
-                  tooltip: 'Leave empty if keeping the card',
-                  description: 'Leave empty if keeping the card'
-                },
-              {
-                  type: 'textfield',
-                  key: 'card_instance_id',
-                  label: 'Card Instance ID',
-                  placeholder: 'Card Instance ID',
-                  input: true,
-                  tooltip: 'Copy the card instance ID from the current game section',
-                  description: 'Copy the card instance ID from the current game section'
-                },
-              {
-                  type: 'button',
-                  action: 'submit',
-                  label: 'Submit',
-                  theme: 'primary'
-                }
-            ]
-        }).then(function(form) {
-            form.nosubmit = true;
-            form.on('submit', function(submission) {
-                actionData = submission.data;
+                value: "action_pass_card",
+                label: "Pass your card",
+              },
+            ],
+          },
+          dataSrc: "values",
+          multiple: false,
+          input: true,
+        },
+        {
+          type: "textfield",
+          key: "to",
+          label: "To (player name)",
+          placeholder: "To (Player name)",
+          input: true,
+          tooltip: "Leave empty if keeping the card",
+          description: "Leave empty if keeping the card",
+        },
+        {
+          type: "textfield",
+          key: "card_instance_id",
+          label: "Card Instance ID",
+          placeholder: "Card Instance ID",
+          input: true,
+          tooltip: "Copy the card instance ID from the current game section",
+          description:
+            "Copy the card instance ID from the current game section",
+        },
+        {
+          type: "button",
+          action: "submit",
+          label: "Submit",
+          theme: "primary",
+        },
+      ],
+    }).then(function (form) {
+      form.nosubmit = true;
+      form.on("submit", function (submission) {
+        actionData = submission.data;
 
-                data = {
-                    // game: sessionStorage.getItem("game"),
-                    // player: sessionStorage.getItem("player"),
-                    game: window.game,
-                    player: window.player,
-                    action: actionData.action,
-                    kwargs: {
-                        card_instance_id: actionData.card_instance_id,
-                      }
-                  }
-                if (actionData.action === "action_pass_card") {
-                    data.kwargs.to = actionData.to;
-                  }
-                socket.emit(
-                    "player_action",
-                    data,
-                  )
-                setTimeout(() => {
-                  document.getElementById("play-card-pre").innerHTML = "";
-
-                  }, 1000);
-                form.cancel("done");
-              });
-          });
-      Formio.createForm(document.getElementById("leave-form"), {
-          "components": [
-              {
-                  type: 'button',
-                  action: 'submit',
-                  label: 'Leave Game',
-                  theme: 'primary'
-                }
-            ]
-        }).then(function(form) {
-            form.nosubmit = true;
-            form.on('submit', function(submission) {
-                // sessionStorage.clear()
-                form.cancel("done");
-                window.location.reload();
-              });
-          });
-    }
+        data = {
+          // game: sessionStorage.getItem("game"),
+          // player: sessionStorage.getItem("player"),
+          game: window.game,
+          player: window.player,
+          action: actionData.action,
+          kwargs: {
+            card_instance_id: actionData.card_instance_id,
+          },
+        };
+        if (actionData.action === "action_pass_card") {
+          data.kwargs.to = actionData.to;
+        }
+        socket.emit("player_action", data);
+        setTimeout(() => {
+          document.getElementById("play-card-pre").innerHTML = "";
+        }, 1000);
+        form.cancel("done");
+      });
+    });
+    Formio.createForm(document.getElementById("leave-form"), {
+      components: [
+        {
+          type: "button",
+          action: "submit",
+          label: "Leave Game",
+          theme: "primary",
+        },
+      ],
+    }).then(function (form) {
+      form.nosubmit = true;
+      form.on("submit", function (submission) {
+        // sessionStorage.clear()
+        form.cancel("done");
+        window.location.reload();
+      });
+    });
+  }
 
   doit();
 </script>
 
 <!-- Sockets stuff comes after this -->
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
+  integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
+  crossorigin="anonymous"
+></script>
 <script type="text/javascript" charset="utf-8">
   var socket = io();
   window.socket = socket;
-  socket.on('connect', function() {
-      socket.emit('my_ping');
-    });
-  socket.on('text_response', data => {
-      console.log(data);
-      document.getElementById("console").innerHTML += "<br><br>" +
-        JSON.stringify(data, null, 2);
-    })
-  socket.on('play_card', data => {
-      console.log("Play the card!");
-      console.log(data);
-      if (data.data) {
-          data = data.data
-        }
-      if (data.card_instance){
-          cardData = {
-              card_instance_id: data.card_instance.id_,
-              title: data.card_instance.card.title,
-              description: data.card_instance.card.description,
-              affinity_towards: data.card_instance.card.affinity_towards,
-              affinity_type: data.card_instance.card.affinity_count,
-              bias_against: data.card_instance.card.bias_against,
-              original_player: data.card_instance.card.original_player.name,
-              from: data.card_instance.from_ ? data.card_instance.from_.player.name : null,
-              recipients: data.recipients
-            }
-          document.getElementById("play-card-pre").innerHTML =
-            JSON.stringify(cardData, null, 2);
-        }
-    });
-  socket.on("about", data => {
-      // data["you"] = sessionStorage.getItem("player");
-      data["you"] = window.player;
-      document.getElementById("current-game").innerHTML = JSON.stringify(data,
-          null, 2);
-    })
+  socket.on("connect", function () {
+    socket.emit("my_ping");
+  });
+  socket.on("text_response", (data) => {
+    console.log(data);
+    document.getElementById("console").innerHTML +=
+      "<br><br>" + JSON.stringify(data, null, 2);
+  });
+  socket.on("play_card", (data) => {
+    console.log("Play the card!");
+    console.log(data);
+    if (data.data) {
+      data = data.data;
+    }
+    if (data.card_instance) {
+      cardData = {
+        card_instance_id: data.card_instance.id_,
+        title: data.card_instance.card.title,
+        description: data.card_instance.card.description,
+        affinity_towards: data.card_instance.card.affinity_towards,
+        affinity_type: data.card_instance.card.affinity_count,
+        bias_against: data.card_instance.card.bias_against,
+        original_player: data.card_instance.card.original_player.name,
+        from: data.card_instance.from_
+          ? data.card_instance.from_.player.name
+          : null,
+        recipients: data.recipients,
+      };
+      document.getElementById("play-card-pre").innerHTML = JSON.stringify(
+        cardData,
+        null,
+        2
+      );
+    }
+  });
+  socket.on("about", (data) => {
+    // data["you"] = sessionStorage.getItem("player");
+    data["you"] = window.player;
+    document.getElementById("current-game").innerHTML = JSON.stringify(
+      data,
+      null,
+      2
+    );
+  });
 
-  socket.on("whos_turn", data => {
-      if (data.data.player_name && data.data.player_name != window.player) {
-          document.getElementById("play-card-pre").innerHTML = "";
-        }
-    })
+  socket.on("whos_turn", (data) => {
+    if (data.data.player_name && data.data.player_name != window.player) {
+      document.getElementById("play-card-pre").innerHTML = "";
+    }
+  });
 
-  socket.on("endgame", data => {
-      alert("Game has ended");
-      socket.emit("about_game", {"game": game});
-    })
+  socket.on("endgame", (data) => {
+    alert("Game has ended");
+    socket.emit("about_game", { game: game });
+  });
 
   setInterval(() => {
-      // game = sessionStorage.getItem("game");
-      game = window.game;
-      if (game)
-      {
-          socket.emit("about_game", {"game": game})
-        }
-    }, 3000);
+    // game = sessionStorage.getItem("game");
+    game = window.game;
+    if (game) {
+      socket.emit("about_game", { game: game });
+    }
+  }, 3000);
 </script>
 
 <style>
-table {
-  width: 100%;
-  height: 100%;
-  table-layout: fixed;
-}
-td {
-  border: 2px solid;
-  overflow: scroll;
-}
-#console {
-  height: 300px;
-}
-#play-card-pre {
-  height: 300px;
-}
-#current-game {
-  height: 300px;
-}
+  table {
+    width: 100%;
+    height: 100%;
+    table-layout: fixed;
+  }
+  td {
+    border: 2px solid;
+    overflow: scroll;
+  }
+  #console {
+    height: 300px;
+  }
+  #play-card-pre {
+    height: 300px;
+  }
+  #current-game {
+    height: 300px;
+  }
 </style>

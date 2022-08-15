@@ -2,15 +2,19 @@ version: "3"
 
 services:
   db:
-    image: "mysql"
+    image: "mysql:8.0"
     container_name: sql
     command: --default-authentication-plugin=mysql_native_password
     restart: always
     environment:
       MYSQL_DATABASE: tattleviralspiral
       MYSQL_ROOT_PASSWORD: "helloworld"
+    ports:
+      - 3306:3306
     volumes:
       - "~/data/viral-spiral/db:/var/lib/postgresql/data/"
+    networks:
+      - tattle
 
   db_gui:
     image: adminer
@@ -18,3 +22,18 @@ services:
     restart: always
     ports:
       - 8080:8080
+    networks:
+      - tattle
+
+  api:
+    build:
+      context: ./
+    container_name: api
+    ports:
+      - 5000:5000
+    networks:
+      - tattle
+
+networks:
+  tattle:
+    driver: bridge
