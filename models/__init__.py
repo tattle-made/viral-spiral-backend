@@ -8,17 +8,18 @@ from .card_queue import PlayerCardQueue
 from .encyclopedia import Article
 
 ALL_MODELS = [
+    # This is the order in which the tables will be created
     Game,
     Round,
-    Card,
-    CardInstance,
-    Player,
-    PlayerInitialBias,
-    PlayerInitialAffinity,
     AffinityTopic,
     Color,
+    PlayerInitialBias,
+    PlayerInitialAffinity,
+    Player,
     PlayerPower,
     CancelStatus,
     CancelVote,
+    Card,
+    CardInstance,
     PlayerCardQueue,
 ]

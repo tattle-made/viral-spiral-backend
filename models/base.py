@@ -29,7 +29,7 @@ def model_id_generator():
 class Model(peewee.Model):
     """Base model with automatic IDs"""
 
-    id_ = peewee.CharField(primary_key=True, default=model_id_generator)
+    id_ = peewee.CharField(primary_key=True, default=model_id_generator, max_length=32)
     created_at = peewee.DateTimeField(
         constraints=[peewee.SQL("DEFAULT CURRENT_TIMESTAMP")]
     )
