@@ -1,0 +1,21 @@
+version: "3"
+
+services:
+  db:
+    image: "postgres"
+    container_name: db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_pw
+      POSTGRES_DB: tattleviralspiral
+      POSTGRES_USER: tattle_admin
+      POSTGRES_PASSWORD: tattle_admin_pw
+    volumes:
+      - "~/data/viral-spiral/db:/var/lib/postgresql/data/"
+
+  db_gui:
+    image: adminer
+    container_name: db_gui
+    restart: always
+    ports:
+      - 8080:8080
