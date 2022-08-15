@@ -2,14 +2,13 @@ version: "3"
 
 services:
   db:
-    image: "postgres"
-    container_name: db
+    image: "mysql"
+    container_name: sql
+    command: --default-authentication-plugin=mysql_native_password
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: root_pw
-      POSTGRES_DB: tattleviralspiral
-      POSTGRES_USER: tattle_admin
-      POSTGRES_PASSWORD: tattle_admin_pw
+      MYSQL_DATABASE: tattleviralspiral
+      MYSQL_ROOT_PASSWORD: "helloworld"
     volumes:
       - "~/data/viral-spiral/db:/var/lib/postgresql/data/"
 
