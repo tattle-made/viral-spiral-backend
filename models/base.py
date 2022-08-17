@@ -14,7 +14,7 @@ from constants import PLAYER_WIN_SCORE
 # TODO shift these to environment variables
 db = peewee.MySQLDatabase(
     "tattleviralspiral",
-    host="localhost",
+    host="db",
     port=3306,
     user="root",
     password="helloworld",
