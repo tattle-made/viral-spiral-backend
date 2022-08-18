@@ -33,8 +33,8 @@ class Card(InGameModel):
     # field. All fake news cards with the same original card form a pool - and
     # ideally the user can select between any of these.
     fake = peewee.BooleanField()
-    original = peewee.ForeignKeyField("self", backref="fakes")
-    faked_by = peewee.ForeignKeyField(Player)
+    original = peewee.ForeignKeyField("self", backref="fakes", null=True)
+    faked_by = peewee.ForeignKeyField(Player, null=True)
 
     # If this card has been fact checked and (accurately) marked as false, it
     # will be discarded.
@@ -81,7 +81,7 @@ class Card(InGameModel):
                 json_dict = json.load(infile)
         fake_map = []
         for obj in json_dict:
-            if fakes := obj.pop("fakes"):
+            if fakes := obj.pop("fakes", None):
                 fake_map.append(fakes)
             else:
                 fake_map.append(None)
@@ -142,6 +142,5 @@ class CardInstance(InGameModel):
         )
         completed_player_ids = [ci.player_id for ci in card_instances]
         select_args = []
-        return self.game.player_set - Player.select().where(
-            Player.id_.in_(completed_player_ids)
-        )
+
+        return self.game.player_set.where(~Player.id_.in_(completed_player_ids))

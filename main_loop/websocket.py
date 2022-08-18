@@ -1,3 +1,4 @@
+import json
 import os
 import pickle
 from queue import Queue
@@ -12,7 +13,7 @@ from flask_socketio import (
     rooms,
     disconnect,
 )
-from playhouse.shortcuts import model_to_dict
+from models.utils import model_to_dict
 
 from models import Game, Player, Card, CardInstance, CancelVote
 
@@ -72,6 +73,7 @@ class WebsocketGameRunner(GameRunner):
 
     @classmethod
     def send_to_game(cls, game: Game, data=None, event="text_response"):
+        json.dumps(data)  # If data isn't json dumpable, raise the error here
         cls.emit_async(
             event,
             {"data": data},
@@ -80,11 +82,13 @@ class WebsocketGameRunner(GameRunner):
 
     @classmethod
     def send_to_player(cls, player: Player, data=None, event="text_response"):
+        json.dumps(data)  # If data isn't json dumpable, raise the error here
         if player.client_id:
             cls.emit_async(event, {"data": data}, to=player.client_id)
 
     @classmethod
     def send_reply(cls, data=None, event="text_response"):
+        json.dumps(data)  # If data isn't json dumpable, raise the error here
         cls.emit_async(event, {"data": data}, to=request.sid)
 
     def invoke_player_action(self, player: Player, card_instance: CardInstance):

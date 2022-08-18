@@ -6,7 +6,7 @@ import json
 import uuid
 import peewee
 from playhouse.dataset import DataSet
-from playhouse.shortcuts import model_to_dict
+from .utils import model_to_dict
 import peeweedbevolve
 
 from constants import PLAYER_WIN_SCORE
