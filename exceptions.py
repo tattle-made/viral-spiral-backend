@@ -11,3 +11,7 @@ class NotFound(Exception):
 
 class DuplicateAction(Exception):
     pass
+
+
+class OutOfCards(Exception):
+    pass

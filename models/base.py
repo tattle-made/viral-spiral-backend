@@ -14,7 +14,7 @@ from constants import PLAYER_WIN_SCORE
 # TODO shift these to environment variables
 db = peewee.MySQLDatabase(
     "tattleviralspiral",
-    host="localhost",
+    host="127.0.0.1",
     port=3306,
     user="root",
     password="helloworld",
@@ -154,15 +154,16 @@ class Game(Model):
         """Returns a dictionary about this game"""
         from .player import Player
 
+        current_player = self.player_set.where(Player.current == True).first()
         return {
             "name": self.name,
             "players": [model_to_dict(player) for player in self.player_set],
             "colors": [model_to_dict(color) for color in self.color_set],
             "topics": [model_to_dict(topics) for topics in self.affinitytopic_set],
             "draw_fn_name": self.draw_fn_name,
-            "current_drawing_player": model_to_dict(
-                self.player_set.where(Player.current == True).first()
-            ),
+            "current_drawing_player": model_to_dict(current_player)
+            if current_player
+            else None,
         }
 
     def update_powers(self):

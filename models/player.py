@@ -303,7 +303,7 @@ class Player(InGameModel):
         from .powers import CancelVote
 
         return (
-            CancelVote.pending_votes(round_=self.game.current_round())
+            CancelVote.pending_votes(round_=self.game.current_round)
             .where(CancelVote.voter == self)
             .first()
         )

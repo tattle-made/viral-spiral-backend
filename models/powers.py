@@ -73,7 +73,7 @@ class CancelStatus(InGameModel):
             .where(
                 cls.against == player,
                 cls.game == player.game,
-                cls.round == player.game.current_round(),
+                cls.round == player.game.current_round,
                 CancelVote.vote == True,
             )
         )
