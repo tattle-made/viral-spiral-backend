@@ -63,6 +63,8 @@ class GameRunner(ABC):
                 if (pending_vote := player.get_pending_cancel_vote()) is not None:
                     self.invoke_vote(player, pending_vote)
                     done = False
+                # TODO see if you really need to update powers after each turn
+                # self.game.update_powers()
             if done:
                 break
 
