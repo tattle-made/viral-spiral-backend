@@ -9,11 +9,7 @@ RUN apt-get update \
 COPY . /app/
 
 RUN pip install pipenv
-# RUN pipenv shell
-# RUN pipenv sync
-# COPY Pipfile /app/
-# COPY Pipfile.lock /app/
-# COPY activate_env.sh /app/
+RUN pipenv sync
 
 RUN export PYTHONPATH=./
 
@@ -21,4 +17,4 @@ EXPOSE 5000
 
 # RUN pip install flask flask-socketio peewee psycopg2 pyparsing connexion six peewee-db-evolve mysql
 
-CMD ["tail", "-f", "/dev/null"]
+CMD ["bash", "/app/start.sh", "-f", "/dev/null"]

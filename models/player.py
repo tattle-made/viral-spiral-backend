@@ -126,9 +126,9 @@ class Player(InGameModel):
             if not card_instance:
                 raise NotFound("Card instance not found")
 
-        if not player:
-            player = self.game.player_set.where(Player.name == to).first()
-            if not player:
+        if not to_player:
+            to_player = self.game.player_set.where(Player.name == to).first()
+            if not to_player:
                 raise NotFound("Player not found")
 
         # Trigger the receive card events
@@ -136,10 +136,10 @@ class Player(InGameModel):
         to_card_instance = CardInstance.create(
             card=card_instance.card,
             from_=card_instance,
-            player=player,
+            player=to_player,
             game=self.game,
         )
-        player.event_receive_card(to_card_instance)
+        to_player.event_receive_card(to_card_instance)
 
         # Dequeue this card
         if dequeue:

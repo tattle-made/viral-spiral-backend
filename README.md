@@ -36,12 +36,10 @@ python setup.py
 
 ## Run the server
 
-- Activate the environment and run the server
+- Run the startup script
 
 ```
-pipenv shell
-source ./activate_env.sh
-python main_loop/websocket.py
+bash start.sh
 ```
 
 - Make sure you see no errors on the console
