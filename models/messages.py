@@ -21,7 +21,7 @@ class OutgoingMessage(object):
     TO_OPTIONS = [TO_PLAYER, TO_GAME, TO_SENDER]
     TO_ANY = TO_OPTIONS
 
-    def __init__(self, name, message_template, can_send_to: list = None):
+    def __init__(self, name=None, message_template=None, can_send_to: list = None):
         self.name = name
         self.message_template = message_template
 
@@ -30,6 +30,12 @@ class OutgoingMessage(object):
 
         self.can_send_to = can_send_to
 
+
+HEARTBEAT = OutgoingMessage(
+    name="heartbeat",
+    can_send_to=OutgoingMessage.TO_ANY,
+    message_template={"data": "heartbeat", "count": "{integer}"},
+)
 
 ERROR_GENERIC = OutgoingMessage(
     name="error",
@@ -97,7 +103,6 @@ NOTIF_END_GAME = OutgoingMessage(
 )
 
 REPLY_ABOUT_GAME = OutgoingMessage(
-    name="about",
     can_send_to=[OutgoingMessage.TO_SENDER, OutgoingMessage.TO_PLAYER],
     message_template={
         "original_message": "{original_message}",
@@ -106,7 +111,6 @@ REPLY_ABOUT_GAME = OutgoingMessage(
 )
 
 REPLY_CREATED_GAME = OutgoingMessage(
-    name="created_game",
     can_send_to=[OutgoingMessage.TO_SENDER],
     message_template={
         "original_message": "{original_message}",
@@ -115,7 +119,6 @@ REPLY_CREATED_GAME = OutgoingMessage(
 )
 
 REPLY_JOINED_GAME = OutgoingMessage(
-    name="joined_game",
     can_send_to=[OutgoingMessage.TO_SENDER, OutgoingMessage.TO_PLAYER],
     message_template={
         "original_message": "{original_message}",
@@ -133,7 +136,6 @@ ERROR_NO_QUEUED_CARD = OutgoingMessage(
 )
 
 REPLY_QUEUED_CARD = OutgoingMessage(
-    name="queued_card",
     can_send_to=[OutgoingMessage.TO_SENDER],
     message_template={
         "original_message": "{original_message}",
@@ -142,7 +144,6 @@ REPLY_QUEUED_CARD = OutgoingMessage(
 )
 
 REPLY_PERFORMED_ACTION = OutgoingMessage(
-    name="performed_action",
     can_send_to=[OutgoingMessage.TO_SENDER],
     message_template={
         "original_message": "{original_message}",
@@ -151,7 +152,6 @@ REPLY_PERFORMED_ACTION = OutgoingMessage(
 )
 
 REPLY_ENCYCLOPEDIA_RESULT = OutgoingMessage(
-    name="encyclopedia_search_result",
     can_send_to=[OutgoingMessage.TO_PLAYER],
     # We restrict to only players not to any sender
     message_template={

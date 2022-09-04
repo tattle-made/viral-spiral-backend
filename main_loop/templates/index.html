@@ -266,6 +266,16 @@ winner will be declared.
     document.getElementById("console").innerHTML +=
       "<br><br>" + JSON.stringify(data, null, 2);
   });
+  socket.on("error", (data) => {
+    console.log(data);
+    document.getElementById("console").innerHTML +=
+      "<br><br>" + JSON.stringify(data, null, 2);
+  });
+  socket.on("heartbeat", (data) => {
+    console.log(data);
+    document.getElementById("console").innerHTML +=
+      "<br><br>" + JSON.stringify(data, null, 2);
+  });
   socket.on("play_card", (data) => {
     console.log("Play the card!");
     console.log(data);

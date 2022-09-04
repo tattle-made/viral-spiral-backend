@@ -17,7 +17,10 @@ from flask_socketio import (
 from models.utils import model_to_dict
 
 from models import Game, Player, Card, CardInstance, CancelVote
-from models.messages import ERROR_GENERIC
+from models.messages import (
+    ERROR_GENERIC,
+    HEARTBEAT,
+)
 
 from main_loop.base import GameRunner
 
@@ -48,7 +51,7 @@ class SocketHandler(logging.StreamHandler):
                     },
                     to=request.sid,
                 )
-            except RuntimeError as exc:
+            except (RuntimeError, TypeError) as exc:
                 print(exc)
                 pass
 
@@ -113,9 +116,19 @@ class WebsocketGameRunner(GameRunner):
             cls.emit_async(event, {"data": data}, to=player.client_id)
 
     @classmethod
-    def send_reply(cls, data=None, event="text_response"):
+    def send_reply(cls, data=None, event=None):
         json.dumps(data)  # If data isn't json dumpable, raise the error here
-        cls.emit_async(event, {"data": data}, to=request.sid)
+        if not event:
+            # use convention incomingevent_reply
+            event = f"{request.event['message']}_reply"
+        cls.emit_async(
+            event,
+            {
+                "data": data,
+                "original_request": request.event,
+            },
+            to=request.sid,
+        )
 
     def invoke_player_action(self, player: Player, card_instance: CardInstance):
 
@@ -215,7 +228,7 @@ def background_thread():
             socketio.sleep(0.1)
             count += 1
             if count % (ticker_interval_secs * 10) == 0:
-                socketio.emit("text_response", {"data": "heartbeat", "count": count})
+                socketio.emit(HEARTBEAT.name, {"data": "heartbeat", "count": count})
             if count % (action_interval_secs * 10) == 0:
                 WebsocketGameRunner.flush_emit_queue()
         except Exception as exc:
@@ -235,9 +248,9 @@ def about_game(message):
     game_name = message["game"]
     runner = WebsocketGameRunner.get_by_name(game_name)
     if runner:
-        runner.send_reply(runner.game.about(), event="about")
+        runner.send_reply(runner.game.about())
     else:
-        WebsocketGameRunner.send_reply(f"Game not found {game_name}", event="about")
+        WebsocketGameRunner.send_reply(f"Game not found {game_name}")
 
 
 @socketio.event
@@ -269,19 +282,16 @@ def create_game(message):
     password = message["password"]
     draw_fn_name = message["draw_fn_name"]
     cards_filepath = message["cards_filepath"]
-    try:
-        runner = WebsocketGameRunner.create(
-            name=game_name,
-            players=players,
-            colors_filepath=colors_filepath,
-            topics_filepath=topics_filepath,
-            cards_filepath=cards_filepath,
-            password=password,
-            draw_fn_name=draw_fn_name,
-        )
-        emit("text_response", {"data": f"Created game: {runner.name}"})
-    except ValueError as exc:
-        emit("text_response", {"data": str(exc)})
+    runner = WebsocketGameRunner.create(
+        name=game_name,
+        players=players,
+        colors_filepath=colors_filepath,
+        topics_filepath=topics_filepath,
+        cards_filepath=cards_filepath,
+        password=password,
+        draw_fn_name=draw_fn_name,
+    )
+    WebsocketGameRunner.send_reply(f"Created game: {runner.name}")
 
 
 @socketio.event
@@ -289,15 +299,12 @@ def load_game(message):
     """Loads a game"""
     game_name = message["game"]
     password = message["password"]
-    try:
-        runner = WebsocketGameRunner.get(game_name)
-        if runner.game.password != password:
-            emit("text_response", {"data": "Incorrect password"})
-            return
+    runner = WebsocketGameRunner.get(game_name)
+    if runner.game.password != password:
+        WebsocketGameRunner.send_reply("Incorrect password")
+        return
 
-        emit("text_response", {"data": f"Loaded game: {runner.name}"})
-    except ValueError as exc:
-        emit("text_response", {"data": str(exc)})
+    WebsocketGameRunner.send_reply(f"Loaded game: {runner.name}")
 
 
 @socketio.event
@@ -324,18 +331,10 @@ def player_action(message):
     runner = WebsocketGameRunner.get_by_name(game_name)
     if runner:
         runner.perform_action(player_name, action, **kwargs)
-        data = {"message": f"Performed action {action}", "original_data": message}
-        emit(
-            "text_response",
-            data,
-            to=request.sid,
-        )
+        WebsocketGameRunner.send_reply({"message": f"Performed action {action}"})
     else:
-        # TODO add original message here
-        emit(
-            "text_response",
-            {"data": "Failed to perform {action}"},
-            to=request.sid,
+        WebsocketGameRunner.send_reply(
+            {"message": "Failed to perform {action}"},
         )
 
 
@@ -373,7 +372,7 @@ def connect():
     with thread_lock:
         if thread is None:
             thread = socketio.start_background_task(background_thread)
-    emit("text_response", {"data": "Connected"})
+    WebsocketGameRunner.send_reply("Connected")
 
 
 @socketio.on("disconnect")
