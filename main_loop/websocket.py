@@ -1,3 +1,4 @@
+import logging
 import json
 import os
 import pickle
@@ -16,6 +17,7 @@ from flask_socketio import (
 from models.utils import model_to_dict
 
 from models import Game, Player, Card, CardInstance, CancelVote
+from models.messages import ERROR_GENERIC
 
 from main_loop.base import GameRunner
 
@@ -29,6 +31,30 @@ app.config["SECRET_KEY"] = os.getenv("FLASK_SECRET")
 socketio = SocketIO(app, async_mode=async_mode)
 thread = None
 thread_lock = Lock()
+
+
+# Set the logger
+class SocketHandler(logging.StreamHandler):
+    def emit(self, record):
+        # TODO check level, request.message
+        msg = self.format(record)
+        if record.levelno >= logging.ERROR:
+            try:
+                socketio.emit(
+                    ERROR_GENERIC.name,
+                    {
+                        "original_request": request.event,
+                        "error": msg,
+                    },
+                    to=request.sid,
+                )
+            except RuntimeError as exc:
+                print(exc)
+                pass
+
+
+root_logger = logging.getLogger("root")
+root_logger.addHandler(SocketHandler())
 
 
 class UniqueQueue(Queue):
@@ -185,12 +211,15 @@ def background_thread():
     action_interval_secs = 2
     ticker_interval_secs = 10
     while True:
-        socketio.sleep(0.1)
-        count += 1
-        if count % (ticker_interval_secs * 10) == 0:
-            socketio.emit("text_response", {"data": "heartbeat", "count": count})
-        if count % (action_interval_secs * 10) == 0:
-            WebsocketGameRunner.flush_emit_queue()
+        try:
+            socketio.sleep(0.1)
+            count += 1
+            if count % (ticker_interval_secs * 10) == 0:
+                socketio.emit("text_response", {"data": "heartbeat", "count": count})
+            if count % (action_interval_secs * 10) == 0:
+                WebsocketGameRunner.flush_emit_queue()
+        except Exception as exc:
+            logging.exception(exc)
 
 
 @app.route("/")
@@ -352,8 +381,14 @@ def test_disconnect():
     print("Client disconnected", request.sid)
 
 
+@socketio.on_error()
+def error_handler(exc):
+    # Let our custom logger handle things
+    logging.exception(exc)
+
+
 def run():
-    socketio.run(app,host="0.0.0.0")
+    socketio.run(app, host="0.0.0.0")
 
 
 if __name__ == "__main__":

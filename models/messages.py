@@ -41,7 +41,7 @@ ERROR_GENERIC = OutgoingMessage(
 )
 
 ERROR_GAME_NOT_FOUND = OutgoingMessage(
-    name="game_not_found",
+    name="error_game_not_found",
     can_send_to=OutgoingMessage.TO_ANY,
     message_template={
         "original_message": "{original_message}",
@@ -50,7 +50,7 @@ ERROR_GAME_NOT_FOUND = OutgoingMessage(
 )
 
 ERROR_GAME_ALREADY_JOINED = OutgoingMessage(
-    name="game_already_joined",
+    name="error_game_already_joined",
     can_send_to=OutgoingMessage.TO_ANY,
     message_template={
         "original_message": "{original_message}",
