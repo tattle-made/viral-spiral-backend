@@ -1,5 +1,7 @@
 import logging
+import inspect
 import json
+import sys
 import os
 import pickle
 from queue import Queue
@@ -24,6 +26,8 @@ from models.messages import (
 
 from main_loop.base import GameRunner
 
+root_logger = logging.getLogger("root")
+
 # Set this variable to "threading", "eventlet" or "gevent" to test the
 # different async modes, or leave it set to None for the application to choose
 # the best option based on installed packages.
@@ -31,7 +35,13 @@ async_mode = None
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.getenv("FLASK_SECRET")
-socketio = SocketIO(app, async_mode=async_mode, cors_allowed_origins="*")
+socketio = SocketIO(
+    app,
+    async_mode=async_mode,
+    cors_allowed_origins="*",
+    logger=root_logger,
+    log_output=True,
+)
 thread = None
 thread_lock = Lock()
 
@@ -56,8 +66,9 @@ class SocketHandler(logging.StreamHandler):
                 pass
 
 
-root_logger = logging.getLogger("root")
+root_logger.setLevel(os.getenv("LOG_LEVEL", "INFO"))
 root_logger.addHandler(SocketHandler())
+root_logger.addHandler(logging.StreamHandler(sys.stdout))
 
 
 class UniqueQueue(Queue):
@@ -121,11 +132,16 @@ class WebsocketGameRunner(GameRunner):
         if not event:
             # use convention incomingevent_reply
             event = f"{request.event['message']}_reply"
+        try:
+            pickle.dumps(request.event)
+            original_event = request.event
+        except TypeError:
+            original_event = request.event["message"]
         cls.emit_async(
             event,
             {
                 "data": data,
-                "original_request": request.event,
+                "original_request": original_event,
             },
             to=request.sid,
         )
@@ -244,6 +260,9 @@ def index():
 @socketio.event
 def about_game(message):
     """Returns info about a game"""
+    logging.info(
+        f"Incoming event - {inspect.getframeinfo(inspect.currentframe()).function} | {message}"
+    )
     # TODO authenticate
     game_name = message["game"]
     runner = WebsocketGameRunner.get_by_name(game_name)
@@ -257,6 +276,9 @@ def about_game(message):
 def join_game(message):
     """Takes a player name and game name. Joins the game. The game needs
     to be created with another API"""
+    logging.info(
+        f"Incoming event - {inspect.getframeinfo(inspect.currentframe()).function} | {message}"
+    )
     game_name = message["game"]
     player_name = message["player"]
     runner = WebsocketGameRunner.get_by_name(game_name)
@@ -275,6 +297,9 @@ def join_game(message):
 @socketio.event
 def create_game(message):
     """Creates a game"""
+    logging.info(
+        f"Incoming event - {inspect.getframeinfo(inspect.currentframe()).function} | {message}"
+    )
     game_name = message["game"]
     players = message["players"]
     colors_filepath = message["colors_filepath"]
@@ -297,6 +322,9 @@ def create_game(message):
 @socketio.event
 def load_game(message):
     """Loads a game"""
+    logging.info(
+        f"Incoming event - {inspect.getframeinfo(inspect.currentframe()).function} | {message}"
+    )
     game_name = message["game"]
     password = message["password"]
     runner = WebsocketGameRunner.get(game_name)
@@ -310,6 +338,9 @@ def load_game(message):
 @socketio.event
 def get_queued_card(message):
     """Get the state given a player"""
+    logging.info(
+        f"Incoming event - {inspect.getframeinfo(inspect.currentframe()).function} | {message}"
+    )
     game_name = message["game"]
     player_name = message["player"]
     runner = WebsocketGameRunner.get_by_name(game_name)
@@ -324,6 +355,9 @@ def get_queued_card(message):
 
 @socketio.event
 def player_action(message):
+    logging.info(
+        f"Incoming event - {inspect.getframeinfo(inspect.currentframe()).function} | {message}"
+    )
     game_name = message["game"]
     player_name = message["player"]
     action = message["action"]
@@ -344,6 +378,9 @@ def disconnect_request():
     def can_disconnect():
         disconnect()
 
+    logging.info(
+        f"Incoming event - {inspect.getframeinfo(inspect.currentframe()).function} | {disconnect}"
+    )
     session["receive_count"] = session.get("receive_count", 0) + 1
     # for this emit we use a callback function
     # when the callback function is invoked we know that the message has been
@@ -356,18 +393,27 @@ def disconnect_request():
 
 
 @socketio.event
-def my_ping():
+def my_ping(message=None):
+    logging.info(
+        f"Incoming event - {inspect.getframeinfo(inspect.currentframe()).function} | {message}"
+    )
     emit("my_pong")
 
 
 @socketio.event
 def my_echo(message):
+    logging.info(
+        f"Incoming event - {inspect.getframeinfo(inspect.currentframe()).function} | {message}"
+    )
     message["echo"] = True
     emit("text_response", message)
 
 
 @socketio.event
-def connect():
+def connect(message=None):
+    logging.info(
+        f"Incoming event - {inspect.getframeinfo(inspect.currentframe()).function} | {message}"
+    )
     global thread
     with thread_lock:
         if thread is None:
