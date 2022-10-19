@@ -126,26 +126,6 @@ class WebsocketGameRunner(GameRunner):
         if player.client_id:
             cls.emit_async(event, {"data": data}, to=player.client_id)
 
-    @classmethod
-    def send_reply(cls, data=None, event=None):
-        json.dumps(data)  # If data isn't json dumpable, raise the error here
-        if not event:
-            # use convention incomingevent_reply
-            event = f"{request.event['message']}_reply"
-        try:
-            pickle.dumps(request.event)
-            original_event = request.event
-        except TypeError:
-            original_event = request.event["message"]
-        cls.emit_async(
-            event,
-            {
-                "data": data,
-                "original_request": original_event,
-            },
-            to=request.sid,
-        )
-
     def invoke_player_action(self, player: Player, card_instance: CardInstance):
 
         self.send_to_player(
@@ -267,9 +247,12 @@ def about_game(message):
     game_name = message["game"]
     runner = WebsocketGameRunner.get_by_name(game_name)
     if runner:
-        runner.send_reply(runner.game.about())
+        return {
+            "status": 200,
+            "about": runner.game.about(),
+        }
     else:
-        WebsocketGameRunner.send_reply(f"Game not found {game_name}")
+        return {"status": 404, "error": f"Game not found {game_name}"}
 
 
 @socketio.event
@@ -285,13 +268,13 @@ def join_game(message):
     if runner:
         player = runner.game.player_set.where(Player.name == player_name).get()
         if player.client_id == request.sid:
-            runner.send_reply(f"Already joined game {game_name}")
+            return {"status": 200, "message": f"Already joined game {game_name}"}
         player.client_id = request.sid
         player.save()
         join_room(game_name)
-        runner.send_reply(f"Joined game {game_name}")
+        return {"status": 200, "message": f"Joined game {game_name}"}
     else:
-        WebsocketGameRunner.send_reply(f"Game not found {game_name}")
+        return {"status": 404, "error": f"Game not found {game_name}"}
 
 
 @socketio.event
@@ -316,7 +299,10 @@ def create_game(message):
         password=password,
         draw_fn_name=draw_fn_name,
     )
-    WebsocketGameRunner.send_reply(f"Created game: {runner.name}")
+    return {
+        "status": 200,
+        "game_name": runner.name,
+    }
 
 
 @socketio.event
@@ -329,10 +315,15 @@ def load_game(message):
     password = message["password"]
     runner = WebsocketGameRunner.get(game_name)
     if runner.game.password != password:
-        WebsocketGameRunner.send_reply("Incorrect password")
-        return
+        return {
+            "status": 401,
+            "error": "incorrect password",
+        }
 
-    WebsocketGameRunner.send_reply(f"Loaded game: {runner.name}")
+    return {
+        "status": 200,
+        "game_name": runner.name,
+    }
 
 
 @socketio.event
@@ -347,10 +338,16 @@ def get_queued_card(message):
     if runner:
         card = runner.get_queued_card(player_name)
         if card:
-            runner.send_reply(model_to_dict(card))
-            return
-        runner.send_reply("No card")
-    WebsocketGameRunner.send_reply("No Game found")
+            return {"status": 200, "card": model_to_dict(card)}
+        return {
+            "status": 200,
+            "card": None,
+            "message": "No card queued",
+        }
+    return {
+        "status": 404,
+        "error": "No game found {game_name}",
+    }
 
 
 @socketio.event
@@ -365,11 +362,12 @@ def player_action(message):
     runner = WebsocketGameRunner.get_by_name(game_name)
     if runner:
         runner.perform_action(player_name, action, **kwargs)
-        WebsocketGameRunner.send_reply({"message": f"Performed action {action}"})
+        return {
+            "status": 200,
+            "message": f"Performed action {action}",
+        }
     else:
-        WebsocketGameRunner.send_reply(
-            {"message": "Failed to perform {action}"},
-        )
+        return {"status": 404, "error": f"No game found {game_name}"}
 
 
 @socketio.event
@@ -418,7 +416,10 @@ def connect(message=None):
     with thread_lock:
         if thread is None:
             thread = socketio.start_background_task(background_thread)
-    WebsocketGameRunner.send_reply("Connected")
+    return {
+        "status": 200,
+        "message": "Connected",
+    }
 
 
 @socketio.on("disconnect")
