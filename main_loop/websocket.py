@@ -290,15 +290,21 @@ def create_game(message):
     password = message["password"]
     draw_fn_name = message["draw_fn_name"]
     cards_filepath = message["cards_filepath"]
-    runner = WebsocketGameRunner.create(
-        name=game_name,
-        players=players,
-        colors_filepath=colors_filepath,
-        topics_filepath=topics_filepath,
-        cards_filepath=cards_filepath,
-        password=password,
-        draw_fn_name=draw_fn_name,
-    )
+    try:
+        runner = WebsocketGameRunner.create(
+            name=game_name,
+            players=players,
+            colors_filepath=colors_filepath,
+            topics_filepath=topics_filepath,
+            cards_filepath=cards_filepath,
+            password=password,
+            draw_fn_name=draw_fn_name,
+        )
+    except ValueError as exc:
+        return {
+            "status": 500,
+            "error": str(exc),
+        }
     return {
         "status": 200,
         "game_name": runner.name,
