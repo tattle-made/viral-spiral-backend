@@ -120,7 +120,7 @@ class Game(Model):
         random.shuffle(sequences)
         for idx, player_name in enumerate(players):
             color = color_objs[0]
-            colors = color_objs[1:] + [color_objs[0]]
+            color_objs = color_objs[1:] + [color_objs[0]]
             player = Player.create(
                 name=player_name, color=color, game=game, sequence=sequences[idx]
             )
