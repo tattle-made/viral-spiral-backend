@@ -4,7 +4,7 @@ import json
 import sys
 import os
 import pickle
-from datetime import datetime
+from datetime import datetime, timezone
 from queue import Queue
 from threading import Lock, Thread
 from flask import Flask, render_template, session, request, copy_current_request_context
@@ -103,7 +103,7 @@ class WebsocketGameRunner(GameRunner):
         while cls.emit_queue.qsize() > 0:
             pickled = cls.emit_queue.get()
             obj = dict(pickle.loads(pickled))
-            obj["timestamp"] = datetime.utcnow().isoformat()
+            obj["timestamp"] = datetime.utcnow().replace(tzinfo=timezone.utc).isoformat()
             socketio.emit(*obj["args"], **obj["kwargs"])
 
     @classmethod
