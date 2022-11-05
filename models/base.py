@@ -14,7 +14,7 @@ from constants import PLAYER_WIN_SCORE
 # TODO shift these to environment variables
 db = peewee.MySQLDatabase(
     "tattleviralspiral",
-    host="db",
+    host="127.0.0.1",
     port=3306,
     user="root",
     password="helloworld",
@@ -45,7 +45,15 @@ class Model(peewee.Model):
         """
         Required: Either a json dict containing the objects or a path to a json
         file.
-        Optional: Can provide a JSON defaults dict"""
+        Optional: Can provide a JSON defaults dict
+
+        Returns - a tuple list of the following format:
+            [
+                (original_json, created_object),
+                .
+                .
+            ]
+        """
         # TODO optimise this
         objects = []
         if not json_dict:
@@ -55,7 +63,7 @@ class Model(peewee.Model):
             if defaults:
                 dict_.update(defaults)
             obj = cls.create(**dict_)
-            objects.append(obj)
+            objects.append((dict_, obj))
         return objects
 
     @classmethod

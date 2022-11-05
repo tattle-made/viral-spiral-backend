@@ -44,6 +44,10 @@ class Card(InGameModel):
     # # a round or not. If this is 0, it means it is the active card
     # _is_current_int = peewee.IntegerField(unique=True, default=-1)
 
+    # Total game bias. This might be used as a condition for whether this card is
+    # to be drawn or not in generator functions
+    tbg = peewee.IntegerField(null=True)
+
     # def is_active(self):
     #     return self._is_current_int == 0
 
@@ -74,23 +78,34 @@ class Card(InGameModel):
         return card_instance
 
     @classmethod
+    def create_from_dict(cls, dict_, defaults=None):
+        defaults = defaults or {}
+        fakes = dict_.pop("fakes", [])
+        affinity_towards = dict_.pop("affinity_towards", None)
+        bias_against = dict_.pop("bias_against", None)
+        dict_.update(defaults)
+        if not dict_.get("description"):
+            return
+        created = cls.create(**dict_)
+        if affinity_towards:
+            topic, _ = AffinityTopic.get_or_create(name=affinity_towards, **defaults)
+            created.affinity_towards_id = topic.id_
+        if bias_against:
+            color, _ = Color.get_or_create(name=bias_against, **defaults)
+            created.bias_against_id = color.id_
+        created.save()
+        for fake in fakes:
+            fake["original_id"] = created.id_
+            cls.create_from_dict(fake, defaults)
+
+    @classmethod
     def import_from_json(cls, json_dict=None, json_path=None, defaults=None):
         """First creates the original cards, then the fakes"""
         if not json_dict:
             with open(json_path) as infile:
                 json_dict = json.load(infile)
-        fake_map = []
-        for obj in json_dict:
-            if fakes := obj.pop("fakes", None):
-                fake_map.append(fakes)
-            else:
-                fake_map.append(None)
-        created_objs = super().import_from_json(json_dict=json_dict, defaults=defaults)
-        for i, obj in enumerate(created_objs):
-            if fakes := fake_map[i]:
-                for fake in fakes:
-                    fake["original_id"] = obj.id_
-                super().import_from_json(json_dict=fakes, defaults=defaults)
+        for dict_ in json_dict:
+            cls.create_from_dict(dict_, defaults=defaults)
 
 
 class CardInstance(InGameModel):

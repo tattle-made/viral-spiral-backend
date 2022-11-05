@@ -19,6 +19,7 @@ black = "*"
 pylint = "*"
 peewee-db-evolve = "*"
 pylint-peewee = "*"
+pandas-ods-reader = "*"
 
 [requires]
 python_version = "3.9"
