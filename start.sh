@@ -1,3 +1,4 @@
+echo "Starting viral spiral backend"
 export PYTHONPATH=$(pwd):$PYTHONPATH
 [ -z "$DB_NAME" ] && export DB_NAME="tattleviralspiral"
 [ -z "$DB_HOST" ] && export DB_HOST="127.0.0.1"

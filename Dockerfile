@@ -17,5 +17,5 @@ EXPOSE 5000
 
 # RUN pip install flask flask-socketio peewee psycopg2 pyparsing connexion six peewee-db-evolve mysql
 
-# CMD ["bash", "/app/start.sh", "-f", "/dev/null"]
-CMD ["tail", "-f", "/dev/null"]
+# CMD ["tail", "-f", "/dev/null"]
+CMD ["bash", "start.sh", "-f", "/dev/null"]
