@@ -1,8 +1,8 @@
 name: deploy-prod
 on:
   push:
-    tags:
-      - "production/**"
+    branches:
+      - main
 
 jobs:
   deploy-k8:
