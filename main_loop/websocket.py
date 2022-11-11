@@ -45,6 +45,7 @@ socketio = SocketIO(
 )
 thread = None
 thread_lock = Lock()
+DEBUG = os.getenv("DEBUG", "no") == "yes"
 
 
 # Set the logger
@@ -442,7 +443,7 @@ def error_handler(exc):
 
 
 def run():
-    socketio.run(app, host="0.0.0.0")
+    socketio.run(app, host="0.0.0.0", allow_unsafe_werkzeug=DEBUG)
 
 
 if __name__ == "__main__":
