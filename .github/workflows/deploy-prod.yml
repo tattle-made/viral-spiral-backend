@@ -26,14 +26,14 @@ jobs:
           name: tattletech/vs-rest
           tags: ${{ steps.vars.outputs.sha_short }}
 
-      # - name: deploy to cluster
-      #   uses: steebchen/kubectl@v2.0.0
-      #   with:
-      #     config: ${{ secrets.PROD_KUBE_CONFIG_DATA }}
-      #     command: set image --record deployment/vs-rest vs-rest=tattletech/vs-rest:${{ steps.vars.outputs.sha_short }}
-      # - name: verify deployment
-      #   uses: steebchen/kubectl@v2.0.0
-      #   with:
-      #     config: ${{ secrets.PROD_KUBE_CONFIG_DATA }}
-      #     version: v1.21.0
-      #     command: rollout status deployment/vs-rest
+      - name: deploy to cluster
+        uses: steebchen/kubectl@v2.0.0
+        with:
+          config: ${{ secrets.PROD_KUBE_CONFIG_DATA }}
+          command: set image --record deployment/vs-rest vs-rest=tattletech/vs-rest:${{ steps.vars.outputs.sha_short }}
+      - name: verify deployment
+        uses: steebchen/kubectl@v2.0.0
+        with:
+          config: ${{ secrets.PROD_KUBE_CONFIG_DATA }}
+          version: v1.21.0
+          command: rollout status deployment/vs-rest
