@@ -1,5 +1,6 @@
 """Base classes for models"""
 from abc import ABC
+import os
 import random
 from io import StringIO
 import json
@@ -12,12 +13,19 @@ import peeweedbevolve
 from constants import PLAYER_WIN_SCORE
 
 # TODO shift these to environment variables
+
+DB_NAME = os.getenv("DB_NAME")
+DB_HOST = os.getenv("DB_HOST")
+DB_USERNAME = os.getenv("DB_USERNAME")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_PORT = os.getenv("DB_PORT")
+
 db = peewee.MySQLDatabase(
-    "tattleviralspiral",
-    host="127.0.0.1",
-    port=3306,
-    user="root",
-    password="helloworld",
+    DB_NAME,
+    host=DB_HOST,
+    port=int(DB_PORT),
+    user=DB_USERNAME,
+    password=DB_PASSWORD,
 )
 dataset = DataSet(db)
 
