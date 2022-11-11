@@ -1,0 +1,43 @@
+name: deploy-prod
+on:
+  push:
+    tags:
+      - "production/**"
+
+jobs:
+  deploy-k8:
+    runs-on: ubuntu-latest
+    needs: changes
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: main
+      - name: Extract SHA
+        id: vars
+        shell: bash
+        run: |
+          echo "setting variables"
+          echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+          cd annotators/annotation-ui
+          npm install
+          npm run build
+
+      - name: Publish to Docker
+        uses: elgohr/Publish-Docker-Github-Action@master
+        with:
+          username: tattletech
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          name: tattletech/vs-rest
+          tags: ${{ steps.vars.outputs.sha_short }}
+
+      # - name: deploy to cluster
+      #   uses: steebchen/kubectl@v2.0.0
+      #   with:
+      #     config: ${{ secrets.PROD_KUBE_CONFIG_DATA }}
+      #     command: set image --record deployment/vs-rest vs-rest=tattletech/vs-rest:${{ steps.vars.outputs.sha_short }}
+      # - name: verify deployment
+      #   uses: steebchen/kubectl@v2.0.0
+      #   with:
+      #     config: ${{ secrets.PROD_KUBE_CONFIG_DATA }}
+      #     version: v1.21.0
+      #     command: rollout status deployment/vs-rest
