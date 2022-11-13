@@ -45,6 +45,7 @@ socketio = SocketIO(
 )
 thread = None
 thread_lock = Lock()
+DEBUG = os.getenv("DEBUG", "no") == "yes"
 
 
 # Set the logger
@@ -89,7 +90,6 @@ class UniqueQueue(Queue):
 
 
 class WebsocketGameRunner(GameRunner):
-
     background_tasks = {}
     max_games = 3  # Allow maximum of 3 games to run in parallel
     emit_queue = UniqueQueue()
@@ -103,7 +103,9 @@ class WebsocketGameRunner(GameRunner):
         while cls.emit_queue.qsize() > 0:
             pickled = cls.emit_queue.get()
             obj = dict(pickle.loads(pickled))
-            obj["timestamp"] = datetime.utcnow().replace(tzinfo=timezone.utc).isoformat()
+            obj["timestamp"] = (
+                datetime.utcnow().replace(tzinfo=timezone.utc).isoformat()
+            )
             socketio.emit(*obj["args"], **obj["kwargs"])
 
     @classmethod
@@ -129,7 +131,6 @@ class WebsocketGameRunner(GameRunner):
             cls.emit_async(event, {"data": data}, to=player.client_id)
 
     def invoke_player_action(self, player: Player, card_instance: CardInstance):
-
         self.send_to_player(
             player,
             {
@@ -141,7 +142,6 @@ class WebsocketGameRunner(GameRunner):
         self.send_to_game(self.game, {"player_name": player.name}, event="whos_turn")
 
     def invoke_vote(self, player: Player, pending_vote: CancelVote):
-
         self.send_to_player(
             player,
             {"pending_vote": model_to_dict(pending_vote)},
@@ -161,6 +161,7 @@ class WebsocketGameRunner(GameRunner):
         self.background_tasks[self.name] = self
 
     def exit(self):
+        self.game.end()
         self.send_to_game(self.game, None, "endgame")
         if self.name in self.background_tasks:
             self.background_tasks.pop(self.name)
@@ -226,7 +227,8 @@ def background_thread():
             socketio.sleep(0.1)
             count += 1
             if count % (ticker_interval_secs * 10) == 0:
-                socketio.emit(HEARTBEAT.name, {"data": "heartbeat", "count": count})
+                for game in Game.select().where(Game.ended == False):
+                    game.heartbeat()
             if count % (action_interval_secs * 10) == 0:
                 WebsocketGameRunner.flush_emit_queue()
         except Exception as exc:
@@ -243,7 +245,8 @@ def index():
 def about_game(message):
     """Returns info about a game"""
     logging.info(
-        f"Incoming event - {inspect.getframeinfo(inspect.currentframe()).function} | {message}"
+        f"Incoming event - {inspect.getframeinfo(inspect.currentframe()).function} |"
+        f" {message}"
     )
     # TODO authenticate
     game_name = message["game"]
@@ -262,7 +265,8 @@ def join_game(message):
     """Takes a player name and game name. Joins the game. The game needs
     to be created with another API"""
     logging.info(
-        f"Incoming event - {inspect.getframeinfo(inspect.currentframe()).function} | {message}"
+        f"Incoming event - {inspect.getframeinfo(inspect.currentframe()).function} |"
+        f" {message}"
     )
     game_name = message["game"]
     player_name = message["player"]
@@ -283,7 +287,8 @@ def join_game(message):
 def create_game(message):
     """Creates a game"""
     logging.info(
-        f"Incoming event - {inspect.getframeinfo(inspect.currentframe()).function} | {message}"
+        f"Incoming event - {inspect.getframeinfo(inspect.currentframe()).function} |"
+        f" {message}"
     )
     game_name = message["game"]
     players = message["players"]
@@ -317,7 +322,8 @@ def create_game(message):
 def load_game(message):
     """Loads a game"""
     logging.info(
-        f"Incoming event - {inspect.getframeinfo(inspect.currentframe()).function} | {message}"
+        f"Incoming event - {inspect.getframeinfo(inspect.currentframe()).function} |"
+        f" {message}"
     )
     game_name = message["game"]
     password = message["password"]
@@ -338,7 +344,8 @@ def load_game(message):
 def get_queued_card(message):
     """Get the state given a player"""
     logging.info(
-        f"Incoming event - {inspect.getframeinfo(inspect.currentframe()).function} | {message}"
+        f"Incoming event - {inspect.getframeinfo(inspect.currentframe()).function} |"
+        f" {message}"
     )
     game_name = message["game"]
     player_name = message["player"]
@@ -361,7 +368,8 @@ def get_queued_card(message):
 @socketio.event
 def player_action(message):
     logging.info(
-        f"Incoming event - {inspect.getframeinfo(inspect.currentframe()).function} | {message}"
+        f"Incoming event - {inspect.getframeinfo(inspect.currentframe()).function} |"
+        f" {message}"
     )
     game_name = message["game"]
     player_name = message["player"]
@@ -385,7 +393,8 @@ def disconnect_request():
         disconnect()
 
     logging.info(
-        f"Incoming event - {inspect.getframeinfo(inspect.currentframe()).function} | {disconnect}"
+        f"Incoming event - {inspect.getframeinfo(inspect.currentframe()).function} |"
+        f" {disconnect}"
     )
     session["receive_count"] = session.get("receive_count", 0) + 1
     # for this emit we use a callback function
@@ -401,7 +410,8 @@ def disconnect_request():
 @socketio.event
 def my_ping(message=None):
     logging.info(
-        f"Incoming event - {inspect.getframeinfo(inspect.currentframe()).function} | {message}"
+        f"Incoming event - {inspect.getframeinfo(inspect.currentframe()).function} |"
+        f" {message}"
     )
     emit("my_pong")
 
@@ -409,7 +419,8 @@ def my_ping(message=None):
 @socketio.event
 def my_echo(message):
     logging.info(
-        f"Incoming event - {inspect.getframeinfo(inspect.currentframe()).function} | {message}"
+        f"Incoming event - {inspect.getframeinfo(inspect.currentframe()).function} |"
+        f" {message}"
     )
     message["echo"] = True
     emit("text_response", message)
@@ -418,7 +429,8 @@ def my_echo(message):
 @socketio.event
 def connect(message=None):
     logging.info(
-        f"Incoming event - {inspect.getframeinfo(inspect.currentframe()).function} | {message}"
+        f"Incoming event - {inspect.getframeinfo(inspect.currentframe()).function} |"
+        f" {message}"
     )
     global thread
     with thread_lock:
@@ -442,7 +454,7 @@ def error_handler(exc):
 
 
 def run():
-    socketio.run(app, host="0.0.0.0")
+    socketio.run(app, host="0.0.0.0", allow_unsafe_werkzeug=DEBUG)
 
 
 if __name__ == "__main__":

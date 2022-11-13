@@ -86,6 +86,7 @@ class Game(Model):
     name = peewee.CharField(unique=True)
     draw_fn_name = peewee.CharField(unique=False)
     password = peewee.CharField(unique=False)
+    ended = peewee.BooleanField(unique=False, default=False)
 
     def active(self):
         # TODO implement this
@@ -93,6 +94,10 @@ class Game(Model):
             if player.score >= PLAYER_WIN_SCORE:
                 return False
         return True
+
+    def heartbeat(self):
+        """Sends an about event to the game room"""
+        self.runner.send_to_game(game=self, data=self.about(), event="heartbeat")
 
     @property
     def current_round(self):
@@ -186,6 +191,10 @@ class Game(Model):
         """Updates powers of each of the players in this game"""
         for player in self.player_set:
             player.update_powers()
+
+    def end(self):
+        self.ended = True
+        self.save()
 
 
 class InGameModel(Model):
