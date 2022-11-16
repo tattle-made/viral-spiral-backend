@@ -4,6 +4,7 @@ import json
 import sys
 import os
 import pickle
+from functools import wraps
 from datetime import datetime, timezone
 from queue import Queue
 from threading import Lock, Thread
@@ -251,6 +252,22 @@ def background_thread():
             logging.exception(exc)
 
 
+def password_auth(func):
+    """Authenticates this request with the game password"""
+
+    @wraps
+    def authenticated(message):
+        password = message["password"]
+        game_name = message["game_name"]
+        game = Game.select().filter(name=game_name).first()
+        if game and game.password == password:
+            return func(message)
+        return {
+            "status": 403,
+            "error": "Invalid password",
+        }
+
+
 @app.route("/")
 def index():
     """Renders the main page of the game"""
@@ -258,6 +275,7 @@ def index():
 
 
 @socketio.event
+@password_auth
 def about_game(message):
     """Returns info about a game"""
     logging.info(
@@ -277,6 +295,7 @@ def about_game(message):
 
 
 @socketio.event
+@password_auth
 def join_game(message):
     """Takes a player name and game name. Joins the game. The game needs
     to be created with another API"""
@@ -335,6 +354,7 @@ def create_game(message):
 
 
 @socketio.event
+@password_auth
 def load_game(message):
     """Loads a game"""
     logging.info(
@@ -357,6 +377,7 @@ def load_game(message):
 
 
 @socketio.event
+@password_auth
 def get_queued_card(message):
     """Get the state given a player"""
     logging.info(
@@ -382,6 +403,7 @@ def get_queued_card(message):
 
 
 @socketio.event
+@password_auth
 def player_action(message):
     logging.info(
         f"Incoming event - {inspect.getframeinfo(inspect.currentframe()).function} |"

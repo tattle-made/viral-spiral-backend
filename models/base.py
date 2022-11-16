@@ -97,11 +97,7 @@ class Game(Model):
 
     def heartbeat(self):
         """Sends an about event to the game room"""
-        from main_loop.websocket import WebsocketGameRunner
-
-        WebsocketGameRunner.send_to_game(
-            game=self, data=self.about(), event="heartbeat"
-        )
+        self.runner.send_to_game(game=self, data=self.about(), event="heartbeat")
 
     @property
     def current_round(self):
