@@ -176,9 +176,15 @@ class Game(Model):
         from .player import Player
 
         current_player = self.player_set.where(Player.current == True).first()
+        players = []
+        for player in self.player_set:
+            dict_ = model_to_dict(player)
+            dict_["affinities"] = player.all_affinities()
+            dict_["biases"] = player.all_biases()
+            players.append(dict_)
         return {
             "name": self.name,
-            "players": [model_to_dict(player) for player in self.player_set],
+            "players": players,
             "colors": [model_to_dict(color) for color in self.color_set],
             "topics": [model_to_dict(topics) for topics in self.affinitytopic_set],
             "draw_fn_name": self.draw_fn_name,

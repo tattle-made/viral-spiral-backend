@@ -73,6 +73,14 @@ class Player(InGameModel):
             count += self.initial_affinity.count
         return count
 
+    def all_affinities(self):
+        return dict(
+            [(topic.id_, self.affinity(topic)) for topic in self.game.affinitytopic_set]
+        )
+
+    def all_biases(self):
+        return dict([(color.id_, self.bias(color)) for color in self.game.color_set])
+
     def card_instances_in_hand(self):
         """Retuns all card instances which the player is holding"""
         # TODO optimise this
