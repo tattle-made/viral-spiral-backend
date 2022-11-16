@@ -148,11 +148,24 @@ class WebsocketGameRunner(GameRunner):
             event="vote_cancel",
         )
 
-    def do_round(self, *args, **kwargs):
+    def do_round(self, drawing_player: Player):
         """Sleeps socket things"""
         socketio.sleep(1)
-        super().do_round(*args, **kwargs)
-        self.send_to_game(self.game, "Finished a round")
+        self.send_to_game(
+            self.game,
+            {
+                "drawing_player": model_to_dict(drawing_player),
+            },
+            event="round_start",
+        )
+        super().do_round(drawing_player)
+        self.send_to_game(
+            self.game,
+            {
+                "drawing_player": model_to_dict(drawing_player),
+            },
+            event="round_end",
+        )
 
     def loop_async(self):
         """Runs the loop function in a thread"""
@@ -227,7 +240,7 @@ def background_thread():
             socketio.sleep(0.1)
             count += 1
             if count % (ticker_interval_secs * 10) == 0:
-                for game in Game.select().where(Game.ended == False):
+                for game in Game.select().where(Game.ended == False).all():
                     game.heartbeat()
             if count % (action_interval_secs * 10) == 0:
                 WebsocketGameRunner.flush_emit_queue()
