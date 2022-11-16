@@ -257,7 +257,6 @@ def password_auth(func):
 
     @wraps
     def authenticated(message):
-        return func(message)  # Disabling password auth for now
         password = message["password"]
         game_name = message["game_name"]
         game = Game.select().filter(name=game_name).first()
@@ -276,7 +275,6 @@ def index():
 
 
 @socketio.event
-@password_auth
 def about_game(message):
     """Returns info about a game"""
     logging.info(
@@ -296,7 +294,6 @@ def about_game(message):
 
 
 @socketio.event
-@password_auth
 def join_game(message):
     """Takes a player name and game name. Joins the game. The game needs
     to be created with another API"""
@@ -355,7 +352,6 @@ def create_game(message):
 
 
 @socketio.event
-@password_auth
 def load_game(message):
     """Loads a game"""
     logging.info(
@@ -378,7 +374,6 @@ def load_game(message):
 
 
 @socketio.event
-@password_auth
 def get_queued_card(message):
     """Get the state given a player"""
     logging.info(
@@ -404,7 +399,6 @@ def get_queued_card(message):
 
 
 @socketio.event
-@password_auth
 def player_action(message):
     logging.info(
         f"Incoming event - {inspect.getframeinfo(inspect.currentframe()).function} |"
