@@ -13,6 +13,9 @@ connexion = "*"
 six = "*"
 peewee-db-evolve = "*"
 mysql = "*"
+gevent = "*"
+gunicorn = "*"
+gevent-websocket = "*"
 
 [dev-packages]
 black = "*"

@@ -111,6 +111,11 @@ class Game(Model):
         with db.atomic():
             round_ = Round.create(game=self, idx=self.current_round.idx + 1)
 
+    def total_global_bias(self):
+        """Total global bias of the game"""
+        # Total number of biased cards which have bene passed at least once
+        return 4
+
     @classmethod
     def new(
         cls,
@@ -176,12 +181,14 @@ class Game(Model):
         from .player import Player
 
         current_player = self.player_set.where(Player.current == True).first()
+
         players = []
         for player in self.player_set:
             dict_ = model_to_dict(player)
             dict_["affinities"] = player.all_affinities()
             dict_["biases"] = player.all_biases()
             players.append(dict_)
+
         return {
             "name": self.name,
             "players": players,
@@ -191,6 +198,7 @@ class Game(Model):
             "current_drawing_player": model_to_dict(current_player)
             if current_player
             else None,
+            "total_global_bias": self.total_global_bias(),
         }
 
     def update_powers(self):
