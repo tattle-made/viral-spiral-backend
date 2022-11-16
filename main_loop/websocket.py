@@ -257,6 +257,7 @@ def password_auth(func):
 
     @wraps
     def authenticated(message):
+        return func(message)  # Disabling password auth for now
         password = message["password"]
         game_name = message["game_name"]
         game = Game.select().filter(name=game_name).first()
