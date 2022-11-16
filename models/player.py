@@ -87,7 +87,6 @@ class Player(InGameModel):
 
     def action_keep_card(self, card_instance_id: str):
         """Remove this card from the queue"""
-        # TODO check if this action is allowed
         from .card_queue import PlayerCardQueue
         from .card import CardInstance
 
@@ -96,6 +95,13 @@ class Player(InGameModel):
         ).first()
 
         PlayerCardQueue.dequeue(card_instance)
+        return card_instance
+
+    def action_discard_card(self, card_instance_id: str):
+        """Remove this card from the queue and discard it"""
+        card_instance = self.action_keep_card(card_instance_id)
+        card_instance.discarded = True
+        card_instance.save()
 
     def action_pass_card(
         self,

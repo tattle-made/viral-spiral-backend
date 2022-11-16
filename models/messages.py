@@ -205,6 +205,17 @@ PLAYER_ACTION_KEEP_CARD = IncomingMessage(
     reply=[ERROR_GENERIC, REPLY_PERFORMED_ACTION],
 )
 
+PLAYER_ACTION_DISCARD_CARD = IncomingMessage(
+    name="player_action",
+    message_template={
+        "game": "{name_of_the_game}",
+        "player": "{name_of_the_player}",
+        "action": "discard_card",
+        "kwargs": {"card_instance_id": "{ID of currently queued card}"},
+    },
+    reply=[ERROR_GENERIC, REPLY_PERFORMED_ACTION],
+)
+
 PLAYER_ACTION_PASS_CARD = IncomingMessage(
     name="player_action",
     message_template={
