@@ -141,7 +141,6 @@ class WebsocketGameRunner(GameRunner):
             },
             event="play_card",
         )
-        self.send_to_game(self.game, {"player_name": player.name}, event="whos_turn")
 
     def invoke_vote(self, player: Player, pending_vote: CancelVote):
         self.send_to_player(
@@ -152,7 +151,7 @@ class WebsocketGameRunner(GameRunner):
 
     def do_round(self, drawing_player: Player):
         """Sleeps socket things"""
-        socketio.sleep(1)
+        socketio.sleep(0.1)
         self.send_to_game(
             self.game,
             {
