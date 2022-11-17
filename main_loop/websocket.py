@@ -180,7 +180,11 @@ class WebsocketGameRunner(GameRunner):
         self.send_to_game(self.game, None, "endgame")
         if self.name in self.background_tasks:
             self.background_tasks.pop(self.name)
-        close_room(self.name)
+        try:
+            close_room(self.name)
+        except RuntimeError as exc:
+            logging.error("Failed to close room: %s", str(exc))
+            pass
 
     def perform_action(self, player_name, action, **kwargs):
         player = self.game.player_set.where(Player.name == player_name).get()
@@ -198,7 +202,7 @@ class WebsocketGameRunner(GameRunner):
         if cls.background_tasks.get(game.name):
             return cls.get_by_name(game.name)
 
-        runner = cls(game=game)
+        runner = cls(game=game, socketio=socketio)
         runner.loop_async()
         return runner
 
@@ -206,7 +210,11 @@ class WebsocketGameRunner(GameRunner):
     def get_by_name(cls, name: str):
         """Returns a game runner obj given a Game name"""
         if runner := cls.background_tasks.get(name):
-            return runner
+            if runner.thread.is_alive():
+                return runner
+            else:
+                cls.background_tasks.pop(name)
+                del runner
 
         # Now load the game from the database, or create a new game
         game = Game.select().where(Game.name == name)

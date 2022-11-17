@@ -16,6 +16,7 @@ mysql = "*"
 gevent = "*"
 gunicorn = "*"
 gevent-websocket = "*"
+uvicorn = "*"
 
 [dev-packages]
 black = "*"

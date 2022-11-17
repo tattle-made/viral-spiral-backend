@@ -2,15 +2,15 @@
 
 import logging
 import sys
-import time
 from abc import ABC, abstractmethod
 from typing import Callable
 from models import Game, Player, CardInstance, CancelStatus, CancelVote
 
 
 class GameRunner(ABC):
-    def __init__(self, game: Game, logger: logging.Logger = None):
+    def __init__(self, game: Game, socketio=None, logger: logging.Logger = None):
         self.game = game
+        self.socketio = socketio
         game.runner = self
         self.default_log_formatter = logging.Formatter(
             f"{self.name} : %(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -51,9 +51,9 @@ class GameRunner(ABC):
                 self.logger.info("Game has ended")
                 return
             # self.logger.info("Looping")
-            time.sleep(0.1)
+            self.socketio.sleep(1)
             done = True
-            for player in self.players:
+            for player in self.players.iterator():
                 # TODO see if you can optimise this in a single query
                 if CancelStatus.cancelled(player):
                     continue
@@ -80,9 +80,14 @@ class GameRunner(ABC):
 
     def loop(self):
         while self.game.active():
+            idx = 0
             for player in self.players.order_by(Player.sequence):
                 self.do_round(player)
-                self.game.save()
+                if idx == 10:
+                    self.game.save()
+                    idx = 0
+                idx += 1
+
         self.exit()
 
     @classmethod
