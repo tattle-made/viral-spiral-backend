@@ -4,7 +4,7 @@ import logging
 import sys
 from abc import ABC, abstractmethod
 from typing import Callable
-from models import Game, Player, CardInstance, CancelStatus, CancelVote
+from models import db, Game, Player, CardInstance, CancelStatus, CancelVote
 
 
 class GameRunner(ABC):
@@ -79,16 +79,17 @@ class GameRunner(ABC):
         pass
 
     def loop(self):
-        while self.game.active():
-            idx = 0
-            for player in self.players.order_by(Player.sequence):
-                self.do_round(player)
-                if idx == 10:
-                    self.game.save()
-                    idx = 0
-                idx += 1
+        with db:
+            while self.game.active():
+                idx = 0
+                for player in self.players.order_by(Player.sequence):
+                    self.do_round(player)
+                    if idx == 10:
+                        self.game.save()
+                        idx = 0
+                    idx += 1
 
-        self.exit()
+            self.exit()
 
     @classmethod
     def send_to_player(cls, player: Player, data: dict = None, event: str = None):
