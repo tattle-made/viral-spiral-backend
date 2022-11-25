@@ -278,14 +278,7 @@ class Player(InGameModel):
         articles = Article.select(Article.id_, Article.content).where(
             Article.content_lower.contains(keyword.lower())
         )
-        self.game.runner.send_to_player(
-            player=self,
-            data={
-                "keyword": keyword,
-                "articles": articles.dicts(),
-            },
-            event=SOCKET_EVENT_ENC_SEARCH_RESULT,
-        )
+        return articles.dicts()
 
     def all_actions(self):
         """Utility function to return all possible actions"""

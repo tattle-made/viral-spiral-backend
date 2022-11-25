@@ -151,14 +151,6 @@ REPLY_PERFORMED_ACTION = OutgoingMessage(
     },
 )
 
-REPLY_ENCYCLOPEDIA_RESULT = OutgoingMessage(
-    can_send_to=[OutgoingMessage.TO_PLAYER],
-    # We restrict to only players not to any sender
-    message_template={
-        "original_message": "{original_message}",
-        "data": {"keyword": "{keyword}", "articles": "{list of dicts of articles}"},
-    },
-)
 EVENT_ABOUT_GAME = IncomingMessage(
     name="about_game",
     message_template={"game": "{name_of_the_game}"},
@@ -319,5 +311,5 @@ PLAYER_ACTION_ENCYCLOPEDIA_SEARCH = IncomingMessage(
         "action": "encyclopedia_search",
         "kwargs": {"keyword": "{ID of currently held card}"},
     },
-    reply=[ERROR_GENERIC, REPLY_ENCYCLOPEDIA_RESULT],
+    reply=[ERROR_GENERIC],
 )

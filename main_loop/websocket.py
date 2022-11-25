@@ -187,7 +187,7 @@ class WebsocketGameRunner(GameRunner):
 
     def perform_action(self, player_name, action, **kwargs):
         player = self.game.player_set.where(Player.name == player_name).get()
-        player.perform_action(action, **kwargs)
+        return player.perform_action(action, **kwargs)
 
     def get_queued_card(self, player_name):
         player = self.game.player_set.where(Player.name == player_name).get()
@@ -417,10 +417,10 @@ def player_action(message):
     kwargs = message["kwargs"]
     runner = WebsocketGameRunner.get_by_name(game_name)
     if runner:
-        runner.perform_action(player_name, action, **kwargs)
+        response = runner.perform_action(player_name, action, **kwargs)
         return {
             "status": 200,
-            "message": f"Performed action {action}",
+            "message": response,
         }
     else:
         return {"status": 404, "error": f"No game found {game_name}"}
