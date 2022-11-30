@@ -151,7 +151,7 @@ class WebsocketGameRunner(GameRunner):
 
     def do_round(self, drawing_player: Player):
         """Sleeps socket things"""
-        socketio.sleep(0.1)
+        socketio.sleep(1)
         self.send_to_game(
             self.game,
             {
