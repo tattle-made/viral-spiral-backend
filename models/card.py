@@ -56,6 +56,9 @@ class Card(InGameModel):
     #     """cards should be a query selector"""
     #     return cards.where(cls._is_current_int == 0).first()
 
+    storyline = peewee.CharField(default="none")
+    storyline_index = peewee.IntegerField(default=0)
+
     def add_bias(self, against: Color):
         """Adds a bias to this card"""
         if self.bias_against:
