@@ -46,7 +46,7 @@ class Card(InGameModel):
 
     # Total game bias. This might be used as a condition for whether this card is
     # to be drawn or not in generator functions
-    tbg = peewee.IntegerField(null=True)
+    tgb = peewee.IntegerField(null=True)
 
     # def is_active(self):
     #     return self._is_current_int == 0

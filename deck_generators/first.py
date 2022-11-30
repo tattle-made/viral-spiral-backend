@@ -11,11 +11,14 @@ def draw(player: Player):
     """Takes a player as an argument and returns a card instance from the
     remaining cards"""
 
+    tgb = player.game.total_global_bias()
+
     # First randomly select an unplayed card
     card = (
         Card.select(Card.storyline)
         .where(Card.game == player.game)
         .where(Card.original_player == None)
+        .where(Card.tgb <= tgb)
         .first()
     )
 
@@ -25,6 +28,7 @@ def draw(player: Player):
         .where(Card.game == player.game)
         .where(Card.original_player == None)
         .where(Card.storyline == card.storyline)
+        .where(Card.tgb <= tgb)
         .order_by(Card.storyline_index)
         .first()
     )
