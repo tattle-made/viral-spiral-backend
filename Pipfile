@@ -17,6 +17,7 @@ gevent = "*"
 gunicorn = "*"
 gevent-websocket = "*"
 uvicorn = "*"
+eventlet = "*"
 
 [dev-packages]
 black = "*"

@@ -46,6 +46,7 @@ class GameRunner(ABC):
     def finish_round(self, drawing_player: Player):
         """Invokes actions and waits until no cards are queued"""
         while True:
+            logging.info("doing round")
             self.game.update_powers()
             if not self.game.active():
                 self.logger.info("Game has ended")

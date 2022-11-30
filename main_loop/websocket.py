@@ -33,7 +33,7 @@ root_logger = logging.getLogger("root")
 # Set this variable to "threading", "eventlet" or "gevent" to test the
 # different async modes, or leave it set to None for the application to choose
 # the best option based on installed packages.
-async_mode = "gevent"
+async_mode = None
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.getenv("FLASK_SECRET")
@@ -170,8 +170,7 @@ class WebsocketGameRunner(GameRunner):
 
     def loop_async(self):
         """Runs the loop function in a thread"""
-        self.thread = Thread(target=self.loop)
-        self.thread.start()
+        self.thread = socketio.start_background_task(target=self.loop)
         self.background_tasks[self.name] = self
 
     def exit(self):
@@ -494,7 +493,7 @@ def error_handler(exc):
 
 
 def run():
-    socketio.run(app, host="0.0.0.0", allow_unsafe_werkzeug=DEBUG)
+    socketio.run(app, host="0.0.0.0", port=5000)
 
 
 if __name__ == "__main__":
