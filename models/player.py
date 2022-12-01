@@ -223,7 +223,7 @@ class Player(InGameModel):
         """Vote True/False to cancel a player"""
         from .powers import CancelVote
 
-        CancelVote.select().where(
+        CancelVote.select().where(CancelVote.voter == self).where(
             CancelVote.cancel_status_id == cancel_status_id
         ).update(vote=vote)
 
@@ -291,8 +291,37 @@ class Player(InGameModel):
     def allowed_actions(self, card_instance):
         """Returns list of actions allowed for this user given a card instance
         received by them"""
-        # TODO Write this
-        return self.all_actions()
+        from .powers import VIRAL_SPIRAL, FAKE_NEWS, CANCEL, PlayerPower, CancelVote
+        from .card import CardInstance
+
+        allowed_actions = [
+            "keep_card",
+            "discard_card",
+            "mark_as_fake",
+            "encyclopedia_search",
+        ]
+
+        # Pass card
+        if card_instance.allowed_recipients():
+            allowed_actions.append("pass_card")
+
+        # Viral Spiral
+        if PlayerPower.get_latest(name=VIRAL_SPIRAL, player=self).active:
+            allowed_actions.append("viral_spiral")
+
+        # Initiate Cancel
+        if PlayerPower.get_latest(name=CANCEL, player=self).active:
+            allowed_actions.append("initiate_cancel")
+
+        # Vote cancel
+        if CancelVote.pending_votes(round_=self.game.round).where(voter=self).exists():
+            allowed_actions.append("vote_cancel")
+
+        # Fake news
+        if PlayerPower.get_latest(name=FAKE_NEWS, player=self).active:
+            allowed_actions.append("fake_news")
+
+        return allowed_actions
 
     def get_queued_card_instance(self):
         """Returns the oldest card instance queued. Returns None if no cards
