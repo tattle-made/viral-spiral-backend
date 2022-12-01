@@ -116,6 +116,7 @@ class Game(Model):
     def total_global_bias(self):
         """Total global bias of the game"""
         # Total number of biased cards which have bene passed at least once
+        from models import Card
         return (
             self.card_set.where(Card.original_player.is_null(False))
             .where(Card.bias_against.is_null(False))
