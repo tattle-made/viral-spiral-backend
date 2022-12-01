@@ -20,7 +20,7 @@ if __name__ == "__main__":
     active = os.getenv("active", "no") == "yes"
 
     args = [game_id, player_name, power_name, active]
-    if not all([args]):
+    if None in args:
         print("Invalid env vars")
         print("Usage:")
         print(
