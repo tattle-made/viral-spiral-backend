@@ -6,6 +6,7 @@ from constants import (
     FAKE_NEWS_BIAS_COUNT,
     SOCKET_EVENT_ENC_SEARCH_RESULT,
 )
+from .utils import model_to_dict
 from .base import InGameModel, Round
 from .encyclopedia import Article
 from .counters import AffinityTopic, Color
@@ -103,7 +104,7 @@ class Player(InGameModel):
         ).first()
 
         PlayerCardQueue.dequeue(card_instance)
-        return card_instance
+        return model_to_dict(card_instance)
 
     def action_discard_card(self, card_instance_id: str):
         """Remove this card from the queue and discard it"""
