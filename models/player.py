@@ -314,7 +314,11 @@ class Player(InGameModel):
             allowed_actions.append("initiate_cancel")
 
         # Vote cancel
-        if CancelVote.pending_votes(round_=self.game.round).where(voter=self).exists():
+        if (
+            CancelVote.pending_votes(round_=self.game.current_round)
+            .where(CancelVote.voter == self)
+            .exists()
+        ):
             allowed_actions.append("vote_cancel")
 
         # Fake news
