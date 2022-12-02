@@ -317,7 +317,10 @@ def join_game(message):
         player.client_id = request.sid
         player.save()
         join_room(game_name)
-        return {"status": 200, "message": f"Joined game {game_name}"}
+        return {
+            "status": 200,
+            "about": runner.game.about(),
+        }
     else:
         return {"status": 404, "error": f"Game not found {game_name}"}
 
