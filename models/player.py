@@ -218,7 +218,7 @@ class Player(InGameModel):
         player = self.game.player_set.where(Player.name == against).first()
         if not player:
             raise NotFound("Player does not exist {against}")
-        CancelStatus.initiate(initiator=self, against=player)
+        return model_to_dict(CancelStatus.initiate(initiator=self, against=player))
 
     def action_vote_cancel(self, cancel_status_id, vote: bool = False):
         """Vote True/False to cancel a player"""
@@ -247,6 +247,7 @@ class Player(InGameModel):
             raise NotFound(f"Fake card not found {fake_card_id}")
 
         card_instance.create_fake_news(fake=fake_card)
+        return model_to_dict(card_instance)
 
     def action_mark_as_fake(self, card_instance_id: str):
         """Mark a card as fake after fact checking"""
@@ -356,7 +357,8 @@ class Player(InGameModel):
 
         kwargs is passed onto the action function"""
         assert action.startswith("action")
-        return getattr(self, action)(**kwargs)
+        response = getattr(self, action)(**kwargs)
+        return response or {"status": 200}
 
     def update_powers(self):
         """Updates the powers of this player"""
