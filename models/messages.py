@@ -303,13 +303,12 @@ PLAYER_ACTION_MARK_AS_FAKE = IncomingMessage(
 )
 
 PLAYER_ACTION_ENCYCLOPEDIA_SEARCH = IncomingMessage(
-    # Search for a keyword in the encyclopedia
     name="player_action",
     message_template={
         "game": "{name_of_the_game}",
         "player": "{name_of_the_player}",
         "action": "encyclopedia_search",
-        "kwargs": {"keyword": "{ID of currently held card}"},
+        "kwargs": {"card_id": "{ID of currently held card}"},
     },
     reply=[ERROR_GENERIC],
 )

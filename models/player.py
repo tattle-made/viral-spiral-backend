@@ -272,14 +272,15 @@ class Player(InGameModel):
             card_instance.card.discarded = True
             card_instance.card.save()
 
-    def action_encyclopedia_search(self, keyword):
-        """Searches for a keyword in the encyclopedia and returns relevant
-        articles"""
+    def action_encyclopedia_search(self, card_id):
+        """Returns this card's encyclopedia article"""
+        from .card import Card
 
-        articles = Article.select(Article.id_, Article.content).where(
-            Article.content_lower.contains(keyword.lower())
-        )
-        return articles.dicts()
+        card = Card.select().where(id_=card_id, game=self.game).first()
+        article = card.encyclopedia_article
+        if article:
+            return model_to_dict(article)
+        return {"status": 404, "message": "Not found"}
 
     def all_actions(self):
         """Utility function to return all possible actions"""
