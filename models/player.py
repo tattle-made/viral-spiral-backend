@@ -247,6 +247,7 @@ class Player(InGameModel):
             raise NotFound(f"Fake card not found {fake_card_id}")
 
         card_instance.create_fake_news(fake=fake_card)
+        return model_to_dict(card_instance)
 
     def action_mark_as_fake(self, card_instance_id: str):
         """Mark a card as fake after fact checking"""
