@@ -100,6 +100,7 @@ class CancelStatus(InGameModel):
         )
 
         CancelVote.initiate(cancel_status=cancel_status, initiator=initiator)
+        return cancel_status
 
 
 class CancelVote(InGameModel):

@@ -218,7 +218,7 @@ class Player(InGameModel):
         player = self.game.player_set.where(Player.name == against).first()
         if not player:
             raise NotFound("Player does not exist {against}")
-        CancelStatus.initiate(initiator=self, against=player)
+        return model_to_dict(CancelStatus.initiate(initiator=self, against=player))
 
     def action_vote_cancel(self, cancel_status_id, vote: bool = False):
         """Vote True/False to cancel a player"""
