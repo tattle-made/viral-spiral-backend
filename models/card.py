@@ -1,6 +1,7 @@
 """All models related to cards"""
 import json
 import peewee
+from playhouse.shortcuts import model_to_dict as mtd_original
 from .base import InGameModel
 from .player import Player
 from .counters import AffinityTopic, Color
@@ -58,6 +59,13 @@ class Card(InGameModel):
 
     storyline = peewee.CharField(default="none")
     storyline_index = peewee.IntegerField(default=0)
+
+    def to_dict(self, **kwargs):
+        """Calls peewee's model_to_dict and passes kwargs to it"""
+        dict_ = mtd_original(self, **kwargs)
+        fakes = [fake.to_dict() for fake in self.fakes]
+        dict_["fakes"] = fakes
+        return dict_
 
     def add_bias(self, against: Color):
         """Adds a bias to this card"""
@@ -142,6 +150,12 @@ class CardInstance(InGameModel):
             return self.STATUS_PASSED
         else:
             return self.STATUS_HOLDING
+
+    def to_dict(self, **kwargs):
+        dict_ = mtd_original(self, **kwargs)
+        dict_["status"] = self.status
+        dict_["card"] = self.card.to_dict()
+        return dict_
 
     def create_fake_news(self, fake: Card):
         """Changes the details of the card"""
