@@ -356,7 +356,8 @@ class Player(InGameModel):
 
         kwargs is passed onto the action function"""
         assert action.startswith("action")
-        return getattr(self, action)(**kwargs)
+        response = getattr(self, action)(**kwargs)
+        return response or {"status": 200}
 
     def update_powers(self):
         """Updates the powers of this player"""
