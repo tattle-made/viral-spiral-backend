@@ -339,6 +339,7 @@ def create_game(message):
     password = message["password"]
     draw_fn_name = message["draw_fn_name"]
     cards_filepath = message["cards_filepath"]
+    encyclopedia_filepath = message["encyclopedia_filepath"]
     try:
         runner = WebsocketGameRunner.create(
             name=game_name,
@@ -346,6 +347,7 @@ def create_game(message):
             colors_filepath=colors_filepath,
             topics_filepath=topics_filepath,
             cards_filepath=cards_filepath,
+            encyclopedia_filepath=encyclopedia_filepath,
             password=password,
             draw_fn_name=draw_fn_name,
         )

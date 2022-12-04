@@ -6,14 +6,14 @@ from .base import InGameModel
 
 
 class Article(InGameModel):
-    title = peewee.TextField()
-    content = peewee.TextField()
-    type_ = peewee.CharField()
-    author = peewee.CharField()
-    fake_content = peewee.TextField()
-    fake_type_ = peewee.CharField()
-    fake_author = peewee.CharField()
-    is_fake = peewee.BooleanField()
+    title = peewee.TextField(null=True)
+    content = peewee.TextField(null=True)
+    type_ = peewee.CharField(null=True)
+    author = peewee.CharField(null=True)
+    fake_content = peewee.TextField(null=True)
+    fake_type_ = peewee.CharField(null=True)
+    fake_author = peewee.CharField(null=True)
+    is_fake = peewee.BooleanField(null=True)
 
     @classmethod
     def import_from_json(cls, json_dict=None, json_path=None, defaults=None):
@@ -32,13 +32,13 @@ class Article(InGameModel):
             card = (
                 Card.select()
                 .where(Card.game_id == game_id)
-                .where(Card.title.iregexp(f".*{title.strip()}.*"))
+                .where(Card.description == title.strip())
                 .first()
             )
             if not card:
                 continue
             dict_["card_id"] = card.id_
-            new_.append(dict)
+            new_.append(dict_)
 
         super().import_from_json(json_dict=new_, defaults=defaults)
 
