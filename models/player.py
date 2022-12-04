@@ -277,10 +277,13 @@ class Player(InGameModel):
         """Returns this card's encyclopedia article"""
         from .card import Card
 
-        card = Card.select().where(id_=card_id, game=self.game).first()
+        card = Card.select().where(Card.id_ == card_id, Card.game == self.game).first()
         article = card.encyclopedia_article
         if article:
-            return model_to_dict(article)
+            return {
+                "status": 200,
+                "article": article.render(),
+            }
         return {"status": 404, "message": "Not found"}
 
     def all_actions(self):

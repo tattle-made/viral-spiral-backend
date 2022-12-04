@@ -117,6 +117,7 @@ class Game(Model):
         """Total global bias of the game"""
         # Total number of biased cards which have bene passed at least once
         from models import Card
+
         return (
             self.card_set.where(Card.original_player.is_null(False))
             .where(Card.bias_against.is_null(False))
@@ -132,12 +133,14 @@ class Game(Model):
         colors_filepath: str,
         topics_filepath: str,
         cards_filepath: str,
+        encyclopedia_filepath: str,
         **model_kwargs
     ):
         """Creates a new game and performs initial setup"""
         from .player import Player
         from .counters import Color, AffinityTopic
         from .card import Card
+        from .encyclopedia import Article
 
         # TODO create initial biases
         game = cls.create(name=name, **model_kwargs)
@@ -161,6 +164,9 @@ class Game(Model):
 
         Card.import_from_json(
             json_path=cards_filepath, defaults={"game_id": str(game.id_)}
+        )
+        Article.import_from_json(
+            json_path=encyclopedia_filepath, defaults={"game_id": str(game.id_)}
         )
 
         return game
