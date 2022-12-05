@@ -110,8 +110,7 @@ class Game(Model):
 
     def add_round(self):
         """Adds a round to this came"""
-        with db.atomic():
-            round_ = Round.create(game=self, started=True)
+        round_ = Round.create(game=self, started=True)
 
     def total_global_bias(self):
         """Total global bias of the game"""
