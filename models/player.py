@@ -381,7 +381,7 @@ class Player(InGameModel):
                 viral_spiral_bias_check = True
                 break
         has_viral_spiral = viral_spiral_affinity_check and viral_spiral_bias_check
-        PlayerPower.update(name=VIRAL_SPIRAL, player=self, active=True)
+        PlayerPower.update(name=VIRAL_SPIRAL, player=self, active=has_viral_spiral)
 
         # Cancel
         has_cancel = False
@@ -389,7 +389,7 @@ class Player(InGameModel):
             if abs(self.affinity(towards=topic)) >= CANCELLING_AFFINITY_COUNT:
                 has_cancel = True
                 break
-        PlayerPower.update(name=CANCEL, player=self, active=True)
+        PlayerPower.update(name=CANCEL, player=self, active=has_cancel)
 
         # Fake News
         has_fake_news = False
@@ -397,4 +397,4 @@ class Player(InGameModel):
             if abs(self.bias(against=color)) >= FAKE_NEWS_BIAS_COUNT:
                 has_fake_news = True
                 break
-        PlayerPower.update(name=FAKE_NEWS, player=self, active=True)
+        PlayerPower.update(name=FAKE_NEWS, player=self, active=has_fake_news)
