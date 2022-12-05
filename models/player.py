@@ -94,7 +94,7 @@ class Player(InGameModel):
 
         PlayerCardQueue.queue(card_instance)
 
-    def action_keep_card(self, card_instance_id: str):
+    def action_keep_card(self, card_instance_id: str, discard=False):
         """Remove this card from the queue"""
         from .card_queue import PlayerCardQueue
         from .card import CardInstance
@@ -103,14 +103,16 @@ class Player(InGameModel):
             CardInstance.id_ == card_instance_id
         ).first()
 
+        if discard:
+            card_instance.discarded = True
+            card_instance.save()
+
         PlayerCardQueue.dequeue(card_instance)
         return model_to_dict(card_instance)
 
     def action_discard_card(self, card_instance_id: str):
         """Remove this card from the queue and discard it"""
-        card_instance = self.action_keep_card(card_instance_id)
-        card_instance.discarded = True
-        card_instance.save()
+        return self.action_keep_card(card_instance_id, discard=True)
 
     def action_pass_card(
         self,
