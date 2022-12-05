@@ -14,6 +14,6 @@ FAKE_NEWS_BIAS_COUNT = 3
 
 ACTIVE_STR = "active"
 
-PLAYER_WIN_SCORE = 5
+PLAYER_WIN_SCORE = 10
 
 SOCKET_EVENT_ENC_SEARCH_RESULT = "encyclopedia_search_result"
