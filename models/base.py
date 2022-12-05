@@ -22,6 +22,8 @@ DB_USERNAME = os.getenv("DB_USERNAME")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_PORT = os.getenv("DB_PORT")
 
+print(DB_NAME, DB_HOST, DB_USERNAME, DB_PASSWORD, DB_PORT)
+
 db = peewee.MySQLDatabase(
     DB_NAME,
     host=DB_HOST,
