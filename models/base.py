@@ -103,15 +103,15 @@ class Game(Model):
 
     @property
     def current_round(self):
-        round_ = self.round_set.order_by(Round.idx.desc()).first()
+        round_ = self.round_set.order_by(Round.created_at.desc()).first()
         if not round_:
-            round_ = Round(game=self, idx=0)  # 0 means not started
+            round_ = Round(game=self, started=False)
         return round_
 
     def add_round(self):
         """Adds a round to this came"""
         with db.atomic():
-            round_ = Round.create(game=self, idx=self.current_round.idx + 1)
+            round_ = Round.create(game=self, started=True)
 
     def total_global_bias(self):
         """Total global bias of the game"""
@@ -234,8 +234,8 @@ class InGameModel(Model):
 class Round(InGameModel):
     """A Round of a game"""
 
-    idx = peewee.IntegerField()
+    started = peewee.BooleanField(null=True)
 
     class Meta:
         # Unique together
-        indexes = ((("idx", "game"), True),)
+        indexes = ((("created_at", "game"), True),)
