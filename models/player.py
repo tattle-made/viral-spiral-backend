@@ -280,11 +280,8 @@ class Player(InGameModel):
         card = Card.select().where(Card.id_ == card_id, Card.game == self.game).first()
         article = card.encyclopedia_article
         if article:
-            return {
-                "status": 200,
-                "article": article.render(),
-            }
-        return {"status": 404, "message": "Not found"}
+            return article.render()
+        return {}
 
     def all_actions(self):
         """Utility function to return all possible actions"""
@@ -360,8 +357,7 @@ class Player(InGameModel):
 
         kwargs is passed onto the action function"""
         assert action.startswith("action")
-        response = getattr(self, action)(**kwargs)
-        return response or {"status": 200}
+        return getattr(self, action)(**kwargs)
 
     def update_powers(self):
         """Updates the powers of this player"""
