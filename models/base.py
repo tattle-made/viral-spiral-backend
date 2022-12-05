@@ -43,7 +43,7 @@ class Model(peewee.Model):
     created_at = peewee.DateTimeField(
         constraints=[peewee.SQL("DEFAULT CURRENT_TIMESTAMP")]
     )
-    created_at = peewee.DateTimeField(
+    updated_at = peewee.DateTimeField(
         constraints=[peewee.SQL("ON UPDATE CURRENT_TIMESTAMP")]
     )
 
