@@ -220,6 +220,8 @@ class Player(InGameModel):
             CardInstance.id_ == pass_card_instance_id
         ).first()
 
+        if not self.current:
+            raise NotAllowed("Can't perform special power if not drawn card")
         if not card_instance:
             raise NotFound("Card instance not found")
         if not PlayerPower.get_latest(name=VIRAL_SPIRAL, player=self).active:
@@ -252,6 +254,8 @@ class Player(InGameModel):
         You may select any topic for which your affinity is +-3 or more"""
         from .powers import CancelStatus, CANCEL, PlayerPower
 
+        if not self.current:
+            raise NotAllowed("Can't perform special power if not drawn card")
         if not PlayerPower.get_latest(name=CANCEL, player=self).active:
             raise NotAllowed("Cancel power missing")
 
@@ -278,6 +282,8 @@ class Player(InGameModel):
         from .card import Card, CardInstance
         from .powers import PlayerPower, FAKE_NEWS
 
+        if not self.current:
+            raise NotAllowed("Can't perform special power if not drawn card")
         if not PlayerPower.get_latest(name=FAKE_NEWS, player=self).active:
             raise NotAllowed("Fake news power missing")
 
@@ -353,13 +359,19 @@ class Player(InGameModel):
         if card_instance.allowed_recipients():
             allowed_actions.append("pass_card")
 
-        # Viral Spiral
-        if PlayerPower.get_latest(name=VIRAL_SPIRAL, player=self).active:
-            allowed_actions.append("viral_spiral")
+        # Special powers. Allow only if this player is the drawing player
+        if self.current:
+            # Viral Spiral
+            if PlayerPower.get_latest(name=VIRAL_SPIRAL, player=self).active:
+                allowed_actions.append("viral_spiral")
 
-        # Initiate Cancel
-        if PlayerPower.get_latest(name=CANCEL, player=self).active:
-            allowed_actions.append("initiate_cancel")
+            # Initiate Cancel
+            if PlayerPower.get_latest(name=CANCEL, player=self).active:
+                allowed_actions.append("initiate_cancel")
+
+            # Fake news
+            if PlayerPower.get_latest(name=FAKE_NEWS, player=self).active:
+                allowed_actions.append("fake_news")
 
         # Vote cancel
         if (
@@ -368,10 +380,6 @@ class Player(InGameModel):
             .exists()
         ):
             allowed_actions.append("vote_cancel")
-
-        # Fake news
-        if PlayerPower.get_latest(name=FAKE_NEWS, player=self).active:
-            allowed_actions.append("fake_news")
 
         return allowed_actions
 
