@@ -74,6 +74,14 @@ class Player(InGameModel):
             count += self.initial_affinity.count
         return count
 
+    def affinity_matches(self, with_: Player, towards: AffinityTopic) -> bool:
+        """Returns True if self's affinity matches with `with_`'s affinity"""
+        return self.affinity(towards=towards) * with_.affinity(towards=towards) >= 1
+
+    def bias_matches(self, with_: Player, against: Color) -> bool:
+        """Returns True if self's bias matches with `with_`'s bias"""
+        return self.bias(against=against) * with_.bias(against=against) >= 1
+
     def all_affinities(self):
         return dict(
             [(topic.id_, self.affinity(topic)) for topic in self.game.affinitytopic_set]
@@ -237,18 +245,25 @@ class Player(InGameModel):
         if keep_card_instance_id:
             self.action_keep_card(keep_card_instance_id)
 
-    def action_initiate_cancel(self, against: str = None):
+    def action_initiate_cancel(self, against: str, topic: AffinityTopic):
         """Initiates a round of voting to cancel a player.
-        Provide the name of the player to cancel"""
+        Provide the name of the player to cancel and the topic to use for casting votes.
+
+        You may select any topic for which your affinity is +-3 or more"""
         from .powers import CancelStatus, CANCEL, PlayerPower
 
         if not PlayerPower.get_latest(name=CANCEL, player=self).active:
             raise NotAllowed("Cancel power missing")
 
+        if not self.has_initiate_cancel(topic=topic):
+            raise NotAllowed("Cannot use this topic for initiating cancel")
+
         player = self.game.player_set.where(Player.name == against).first()
         if not player:
             raise NotFound("Player does not exist {against}")
-        return model_to_dict(CancelStatus.initiate(initiator=self, against=player))
+        return model_to_dict(
+            CancelStatus.initiate(initiator=self, against=player, topic=topic)
+        )
 
     def action_vote_cancel(self, cancel_status_id, vote: bool = False):
         """Vote True/False to cancel a player"""
@@ -389,6 +404,17 @@ class Player(InGameModel):
         assert action.startswith("action")
         return getattr(self, action)(**kwargs)
 
+    def has_initiate_cancel(self, topic: AffinityTopic = None):
+        """Checks whether this player can initate a cancel vote round using members of `topic` to case the vote.
+        If topic is not provided, this will check whether this player can use ANY topic to initiate cancel
+        """
+        has_cancel = False
+        topics = [topic] or self.game.affinitytopic_set
+        for topic in topics:
+            if abs(self.affinity(towards=topic)) >= CANCELLING_AFFINITY_COUNT:
+                return True
+        return False
+
     def update_powers(self):
         """Updates the powers of this player"""
         from .powers import VIRAL_SPIRAL, CANCEL, FAKE_NEWS, PlayerPower
@@ -410,11 +436,7 @@ class Player(InGameModel):
         PlayerPower.update(name=VIRAL_SPIRAL, player=self, active=has_viral_spiral)
 
         # Cancel
-        has_cancel = False
-        for topic in self.game.affinitytopic_set:
-            if abs(self.affinity(towards=topic)) >= CANCELLING_AFFINITY_COUNT:
-                has_cancel = True
-                break
+        has_cancel = self.has_initiate_cancel()
         PlayerPower.update(name=CANCEL, player=self, active=has_cancel)
 
         # Fake News

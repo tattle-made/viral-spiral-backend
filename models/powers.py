@@ -3,6 +3,7 @@
 import peewee
 from .base import InGameModel, Game, Round, db, model_id_generator
 from .player import Player
+from .counters import AffinityTopic
 
 from constants import ACTIVE_STR
 from exceptions import NotFound, DuplicateAction
@@ -56,6 +57,7 @@ class CancelStatus(InGameModel):
     round = peewee.ForeignKeyField(Round)
     against = peewee.ForeignKeyField(Player)
     initiator = peewee.ForeignKeyField(Player)
+    topic = peewee.ForeignKeyField(AffinityTopic)
 
     class Meta:
         # Unique together
@@ -89,11 +91,12 @@ class CancelStatus(InGameModel):
         return False
 
     @classmethod
-    def initiate(cls, initiator: Player, against: Player):
+    def initiate(cls, initiator: Player, against: Player, topic: AffinityTopic):
         cancel_status = cls.create(
             round=initiator.game.current_round,
             against=against,
             initiator=initiator,
+            topic=topic,
             game=initiator.game,
         )
 
@@ -113,7 +116,12 @@ class CancelVote(InGameModel):
     @classmethod
     def initiate(cls, cancel_status: CancelStatus, initiator: Player):
         # TODO use multi put
-        for player in player.game.player_set.where(Player.color == player.color):
+        for player in player.game.player_set:
+            if not player.affinity_matches(
+                with_=initiator, towards=cancel_status.topic
+            ):
+                continue
+
             voted = True if player.id_ == initiator.id_ else None
             cls.create(cancel_status=cancel_status, voter=player, voted=voted)
 
