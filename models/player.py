@@ -198,9 +198,13 @@ class Player(InGameModel):
             )
 
     def action_viral_spiral(
-        self, keep_card_instance_id: str, pass_card_instance_id: str
+        self,
+        keep_card_instance_id: str,
+        pass_card_instance_id: str,
+        to: list,
     ):
-        """Pass a card to all the players"""
+        """Pass a card to all the players or a subset of the players.
+        Can specify the player IDs in the `to` list"""
         from .powers import VIRAL_SPIRAL, PlayerPower
         from .card import CardInstance
 
@@ -213,7 +217,11 @@ class Player(InGameModel):
         if not PlayerPower.get_latest(name=VIRAL_SPIRAL, player=self).active:
             raise NotAllowed("Viral spiral power missing to pass to all")
 
-        for player in card_instance.allowed_recipients():
+        recipients = card_instance.allowed_recipients()
+        if to:
+            recipients = [rec for rec in recipients if rec.id in to]
+
+        for player in recipients:
             self.action_pass_card(
                 card_instance=card_instance,
                 to_player=player,
