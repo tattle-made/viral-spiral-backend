@@ -108,6 +108,26 @@ class Player(InGameModel):
             card_instance.save()
 
         PlayerCardQueue.dequeue(card_instance)
+
+        # If this card's bias / affinity aligns with the player's bias / affinity,
+        # deduct points
+        bias_against = card_instance.card.bias_against
+        if bias_against and self.bias(against=bias_against) >= 1:
+            Player.update(score=Player.score - 1).where(
+                Player.id_ == self.id_
+            ).execute()
+
+        affinity_towards = card_instance.card.affinity_towards
+        affinity_count = card_instance.card.affinity_count
+        if (
+            affinity_towards
+            and affinity_count in (-1, 1)
+            and self.affinity(towards=affinity_towards) * affinity_count >= 1
+        ):
+            Player.update(score=Player.score - 1).where(
+                Player.id_ == self.id_
+            ).execute()
+
         return model_to_dict(card_instance)
 
     def action_discard_card(self, card_instance_id: str):
