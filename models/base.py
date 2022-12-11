@@ -83,6 +83,28 @@ class Model(peewee.Model):
         ds_table = dataset[cls._meta.name]
         dataset.freeze(ds_table.all(), format=format, filename=output_path)
 
+    def next(self, order_by: None):
+        """Returns the next obj. You can specify the order_by as a field.
+        if order_by == None, it will order by at_created"""
+
+        if not order_by:
+            order_by = FullRound.at_created
+
+        objs = self.select().order_by(order_by).iterator()
+        while obj := next(objs, None):
+            if obj.id_ == self.id_:
+                return next(objs, None)
+
+    def previous(self, order_by: None):
+        """Returns the prev obj. You can specify the order_by as a field.
+        if order_by == None, it will order by at_created"""
+
+        if not order_by:
+            order_by = FullRound.at_created
+        order_by = order_by.desc()
+
+        return self.next(order_by=order_by)
+
 
 class Game(Model):
     """A game instance"""
@@ -110,9 +132,13 @@ class Game(Model):
             round_ = Round(game=self, started=False)
         return round_
 
-    def add_round(self):
+    @property
+    def previous_round(self):
+        return self.round_set.order_by(Round.created_at.desc())[1]
+
+    def add_round(self, full_round):
         """Adds a round to this came"""
-        round_ = Round.create(game=self, started=True)
+        round_ = Round.create(game=self, full_round=full_round, started=True)
 
     def total_global_bias(self):
         """Total global bias of the game"""
@@ -135,7 +161,7 @@ class Game(Model):
         topics_filepath: str,
         cards_filepath: str,
         encyclopedia_filepath: str,
-        **model_kwargs
+        **model_kwargs,
     ):
         """Creates a new game and performs initial setup"""
         from .player import Player
@@ -172,11 +198,11 @@ class Game(Model):
 
         return game
 
-    def draw(self, player):
+    def draw(self, player, full_round):
         from .player import Player
         from deck_generators import GENERATORS
 
-        self.add_round()
+        self.add_round(full_round=full_round)
         draw_fn = GENERATORS.get(self.draw_fn_name)
         Player.update(current=False).where(Player.game == self).execute()
         Player.update(sequence=Player.sequence + 100, current=True).where(
@@ -232,10 +258,17 @@ class InGameModel(Model):
     game = peewee.ForeignKeyField(Game)
 
 
+class FullRound(InGameModel):
+    """A set of rounds"""
+
+    pass
+
+
 class Round(InGameModel):
     """A Round of a game"""
 
     started = peewee.BooleanField(null=True)
+    full_round = peewee.ForeignKeyField(FullRound)
 
     class Meta:
         # Unique together

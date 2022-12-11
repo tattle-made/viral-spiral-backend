@@ -65,29 +65,33 @@ class CancelStatus(InGameModel):
 
     @classmethod
     def cancelled(cls, player: Player):
-        """Returns True if this player has been cancelled in the active round
-        else False"""
-        votes = (
-            CancelVote.select()
-            .join(cls)
-            .where(
-                cls.against == player,
-                cls.game == player.game,
-                cls.round == player.game.current_round,
-                CancelVote.vote == True,
-            )
-        )
-        grouped = votes.select(
-            cls.initiator, peewee.fn.COUNT(CancelVote.id_).alias("votes")
-        ).group_by(cls.initiator)
+        """Returns True if this player has been cancelled in the previous FullRound"""
+        current_full_round = player.game.current_round.full_round
+        previous_full_round = current_full_round.previous()
+        rounds = previous_full_round.round_set
 
-        for row in grouped:
-            if (
-                row.votes
-                / player.game.player_set.where(Player.color == player.color).count()
-                >= 0.5
-            ):
-                return True
+        for round_ in rounds:
+            votes = (
+                CancelVote.select()
+                .join(cls)
+                .where(
+                    cls.against == player,
+                    cls.game == player.game,
+                    cls.round == round_,
+                    CancelVote.vote == True,
+                )
+            )
+            grouped = votes.select(
+                cls.initiator, peewee.fn.COUNT(CancelVote.id_).alias("votes")
+            ).group_by(cls.initiator)
+
+            for row in grouped:
+                if (
+                    row.votes
+                    / player.game.player_set.where(Player.color == player.color).count()
+                    >= 0.5
+                ):
+                    return True
         return False
 
     @classmethod

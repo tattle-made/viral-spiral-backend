@@ -1,5 +1,5 @@
 """Easy imports for models"""
-from .base import Game, Round, db
+from .base import Game, Round, FullRound, db
 from .card import Card, CardInstance
 from .player import Player, PlayerInitialBias, PlayerInitialAffinity
 from .counters import AffinityTopic, Color
@@ -11,6 +11,7 @@ ALL_MODELS = [
     # This is the order in which the tables will be created
     Game,
     Round,
+    FullRound,
     AffinityTopic,
     Color,
     PlayerInitialBias,

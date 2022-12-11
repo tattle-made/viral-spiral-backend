@@ -74,11 +74,11 @@ class Player(InGameModel):
             count += self.initial_affinity.count
         return count
 
-    def affinity_matches(self, with_: Player, towards: AffinityTopic) -> bool:
+    def affinity_matches(self, with_, towards: AffinityTopic) -> bool:
         """Returns True if self's affinity matches with `with_`'s affinity"""
         return self.affinity(towards=towards) * with_.affinity(towards=towards) >= 1
 
-    def bias_matches(self, with_: Player, against: Color) -> bool:
+    def bias_matches(self, with_, against: Color) -> bool:
         """Returns True if self's bias matches with `with_`'s bias"""
         return self.bias(against=against) * with_.bias(against=against) >= 1
 
