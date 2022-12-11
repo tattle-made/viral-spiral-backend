@@ -138,6 +138,9 @@ class WebsocketGameRunner(GameRunner):
                 "card_instance": model_to_dict(card_instance),
                 "recipients": [rec.name for rec in card_instance.allowed_recipients()],
                 "allowed_actions": player.allowed_actions(card_instance),
+                "valid_topics_for_cancel": [
+                    model_to_dict(topic) for topic in player.valid_topics_for_cancel()
+                ],
             },
             event="play_card",
         )

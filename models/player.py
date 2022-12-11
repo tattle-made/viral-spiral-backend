@@ -247,7 +247,7 @@ class Player(InGameModel):
         if keep_card_instance_id:
             self.action_keep_card(keep_card_instance_id)
 
-    def action_initiate_cancel(self, against: str, topic: AffinityTopic):
+    def action_initiate_cancel(self, against: str, topic_id: str):
         """Initiates a round of voting to cancel a player.
         Provide the name of the player to cancel and the topic to use for casting votes.
 
@@ -258,6 +258,11 @@ class Player(InGameModel):
             raise NotAllowed("Can't perform special power if not drawn card")
         if not PlayerPower.get_latest(name=CANCEL, player=self).active:
             raise NotAllowed("Cancel power missing")
+
+        if topic_id:
+            topic = AffinityTopic.select().where(AffinityTopic.id_ == topic_id).first()
+        if not topic:
+            raise NotFound("No topic provided")
 
         if not self.has_initiate_cancel(topic=topic):
             raise NotAllowed("Cannot use this topic for initiating cancel")
@@ -412,16 +417,22 @@ class Player(InGameModel):
         assert action.startswith("action")
         return getattr(self, action)(**kwargs)
 
+    def valid_topics_for_cancel(self):
+        """Returns a list of topics this player can use to initiate cancel"""
+        return [
+            topic
+            for topic in self.game.affinitytopic_set
+            if abs(self.affinity(towards=topic)) >= CANCELLING_AFFINITY_COUNT
+        ]
+
     def has_initiate_cancel(self, topic: AffinityTopic = None):
         """Checks whether this player can initate a cancel vote round using members of `topic` to case the vote.
         If topic is not provided, this will check whether this player can use ANY topic to initiate cancel
         """
-        has_cancel = False
-        topics = [topic] or self.game.affinitytopic_set
-        for topic in topics:
-            if abs(self.affinity(towards=topic)) >= CANCELLING_AFFINITY_COUNT:
-                return True
-        return False
+        if topic:
+            return topic in self.valid_topics_for_cancel()
+        else:
+            return bool(self.valid_topics_for_cancel())
 
     def update_powers(self):
         """Updates the powers of this player"""
