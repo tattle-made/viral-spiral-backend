@@ -83,24 +83,24 @@ class Model(peewee.Model):
         ds_table = dataset[cls._meta.name]
         dataset.freeze(ds_table.all(), format=format, filename=output_path)
 
-    def next(self, order_by: None):
+    def next(self, order_by=None):
         """Returns the next obj. You can specify the order_by as a field.
-        if order_by == None, it will order by at_created"""
+        if order_by == None, it will order by created_at"""
 
         if not order_by:
-            order_by = FullRound.at_created
+            order_by = FullRound.created_at
 
         objs = self.select().order_by(order_by).iterator()
         while obj := next(objs, None):
             if obj.id_ == self.id_:
                 return next(objs, None)
 
-    def previous(self, order_by: None):
+    def previous(self, order_by=None):
         """Returns the prev obj. You can specify the order_by as a field.
-        if order_by == None, it will order by at_created"""
+        if order_by == None, it will order by created_at"""
 
         if not order_by:
-            order_by = FullRound.at_created
+            order_by = FullRound.created_at
         order_by = order_by.desc()
 
         return self.next(order_by=order_by)

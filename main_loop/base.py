@@ -73,7 +73,7 @@ class GameRunner(ABC):
             if done:
                 break
 
-    def do_round(self, drawing_player: Player, full_round=full_round):
+    def do_round(self, drawing_player: Player, full_round: FullRound):
         """Performs a round in `game` with `drawing_player` drawing a card"""
         self.finish_round(drawing_player)  # Finish any older rounds
         card_instance = self.game.draw(drawing_player, full_round=full_round)
@@ -89,7 +89,7 @@ class GameRunner(ABC):
                 idx = 0
                 full_round = FullRound.create(game=self.game)
                 for player in self.players.order_by(Player.sequence):
-                    self.do_round(player, full_round=full_round)
+                    self.do_round(player, full_round)
                     if idx == 10:
                         self.game.save()
                         idx = 0

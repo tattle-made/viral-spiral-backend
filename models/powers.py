@@ -1,7 +1,7 @@
 """List of powers"""
 
 import peewee
-from .base import InGameModel, Game, Round, db, model_id_generator
+from .base import InGameModel, Game, Round, db, model_id_generator, FullRound
 from .player import Player
 from .counters import AffinityTopic
 
@@ -48,7 +48,10 @@ class PlayerPower(InGameModel):
     def update(cls, name: str, player: Player, active: bool):
         # TODO No need to update if power hasn't changed
         assert name in ALL_POWERS
-        cls.create(name=name, player=player, active=active, game=player.game)
+        try:
+            cls.create(name=name, player=player, active=active, game=player.game)
+        except peewee.IntegrityError:
+            pass
 
 
 class CancelStatus(InGameModel):
@@ -66,8 +69,12 @@ class CancelStatus(InGameModel):
     @classmethod
     def cancelled(cls, player: Player):
         """Returns True if this player has been cancelled in the previous FullRound"""
-        current_full_round = player.game.current_round.full_round
-        previous_full_round = current_full_round.previous()
+        try:
+            current_full_round = player.game.current_round.full_round
+            previous_full_round = current_full_round.previous()
+        except FullRound.DoesNotExist:
+            return False
+
         rounds = previous_full_round.round_set
 
         for round_ in rounds:
