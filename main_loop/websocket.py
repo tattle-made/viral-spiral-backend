@@ -20,7 +20,7 @@ from flask_socketio import (
 )
 from models.utils import model_to_dict
 
-from models import Game, Player, Card, CardInstance, CancelVote
+from models import Game, Player, Card, CardInstance, CancelVote, FullRound
 from models.messages import (
     ERROR_GENERIC,
     HEARTBEAT,
@@ -152,7 +152,7 @@ class WebsocketGameRunner(GameRunner):
             event="vote_cancel",
         )
 
-    def do_round(self, drawing_player: Player):
+    def do_round(self, drawing_player: Player, full_round: FullRound):
         """Sleeps socket things"""
         socketio.sleep(1)
         self.send_to_game(
@@ -162,7 +162,7 @@ class WebsocketGameRunner(GameRunner):
             },
             event="round_start",
         )
-        super().do_round(drawing_player)
+        super().do_round(drawing_player, full_round)
         self.send_to_game(
             self.game,
             {
