@@ -207,9 +207,9 @@ class Player(InGameModel):
 
     def action_viral_spiral(
         self,
-        keep_card_instance_id: str,
         pass_card_instance_id: str,
         to: list,
+        keep_card_instance_id: str = None,
     ):
         """Pass a card to all the players or a subset of the players.
         Can specify the player IDs in the `to` list"""
