@@ -19,6 +19,8 @@ from flask_socketio import (
     disconnect,
 )
 from models.utils import model_to_dict
+import cProfile
+import sys
 
 from models import Game, Player, Card, CardInstance, CancelVote, FullRound
 from models.messages import (
@@ -145,6 +147,7 @@ class WebsocketGameRunner(GameRunner):
             },
             event="play_card",
         )
+        #self.send_to_game(self.game, {"player_name": player.name}, event="whos_turn")
 
     def invoke_vote(self, player: Player, pending_vote: CancelVote):
         self.send_to_player(
@@ -503,7 +506,6 @@ def error_handler(exc):
 
 def run():
     socketio.run(app, host="0.0.0.0", port=5000)
-
 
 if __name__ == "__main__":
     run()

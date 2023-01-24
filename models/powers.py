@@ -75,6 +75,9 @@ class CancelStatus(InGameModel):
         except FullRound.DoesNotExist:
             return False
 
+        if not previous_full_round:
+            return False
+
         rounds = previous_full_round.round_set
 
         for round_ in rounds:
