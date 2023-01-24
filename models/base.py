@@ -129,7 +129,11 @@ class Game(Model):
     def current_round(self):
         round_ = self.round_set.order_by(Round.created_at.desc()).first()
         if not round_:
-            round_ = Round(game=self, started=False)
+            round_ = Round.create(
+                game=self,
+                started=False,
+                full_round=FullRound.select().order_by(FullRound.created_at.desc()).first()
+            )
         return round_
 
     @property

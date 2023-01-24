@@ -5,7 +5,7 @@ from .base import InGameModel, Game, Round, db, model_id_generator, FullRound
 from .player import Player
 from .counters import AffinityTopic
 
-from constants import ACTIVE_STR
+from constants import ACTIVE_STR, CANCEL_VOTE_ALL_PLAYERS
 from exceptions import NotFound, DuplicateAction
 
 VIRAL_SPIRAL = "viral_spiral"
@@ -131,13 +131,13 @@ class CancelVote(InGameModel):
     def initiate(cls, cancel_status: CancelStatus, initiator: Player):
         # TODO use multi put
         for player in initiator.game.player_set:
-            if not player.affinity_matches(
+            if not (CANCEL_VOTE_ALL_PLAYERS or player.affinity_matches(
                 with_=initiator, towards=cancel_status.topic
-            ):
+            )):
                 continue
 
             voted = True if player.id_ == initiator.id_ else None
-            cls.create(cancel_status=cancel_status, voter=player, voted=voted)
+            cls.create(cancel_status=cancel_status, voter=player, voted=voted, game=initiator.game)
 
     @classmethod
     def pending_votes(cls, round_: Round):
