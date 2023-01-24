@@ -127,7 +127,7 @@ class CancelVote(InGameModel):
     @classmethod
     def initiate(cls, cancel_status: CancelStatus, initiator: Player):
         # TODO use multi put
-        for player in player.game.player_set:
+        for player in initiator.game.player_set:
             if not player.affinity_matches(
                 with_=initiator, towards=cancel_status.topic
             ):

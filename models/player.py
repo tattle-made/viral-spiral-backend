@@ -267,7 +267,7 @@ class Player(InGameModel):
         if not self.has_initiate_cancel(topic=topic):
             raise NotAllowed("Cannot use this topic for initiating cancel")
 
-        player = self.game.player_set.where(Player.name == against).first()
+        player = self.game.player_set.where(Player.id_ == against).first()
         if not player:
             raise NotFound(f"Player does not exist {against}")
         return model_to_dict(
