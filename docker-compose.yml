@@ -12,7 +12,7 @@ services:
     ports:
       - 3306:3306
     volumes:
-      - "~/data/viral-spiral/db:/var/lib/postgresql/data/"
+      - "~/data/viral-spiral/db:/var/lib/mysql"
     networks:
       - tattle
 
@@ -29,12 +29,23 @@ services:
     build:
       context: ./
     container_name: api
+    depends_on:
+      - db
     ports:
       - 5000:5000
     networks:
       - tattle
+    volumes:
+      - "./:/app"
     environment:
       - PYTHONPATH=./
+      - DB_HOST=sql
+      - DB_PORT=3306
+      - DB_NAME=tattleviralspiral
+      - DB_USERNAME=root
+      - DEBUG=yes
+      - DB_PASSWORD=helloworld
+    command: tail -f /dev/null
 
 networks:
   tattle:
