@@ -269,7 +269,7 @@ class Player(InGameModel):
 
         player = self.game.player_set.where(Player.name == against).first()
         if not player:
-            raise NotFound("Player does not exist {against}")
+            raise NotFound(f"Player does not exist {against}")
         return model_to_dict(
             CancelStatus.initiate(initiator=self, against=player, topic=topic)
         )
