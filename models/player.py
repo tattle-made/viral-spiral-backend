@@ -278,9 +278,9 @@ class Player(InGameModel):
         """Vote True/False to cancel a player"""
         from .powers import CancelVote
 
-        CancelVote.select().where(CancelVote.voter == self).where(
+        CancelVote.update(vote=vote).where(CancelVote.voter == self).where(
             CancelVote.cancel_status_id == cancel_status_id
-        ).update(vote=vote)
+        ).execute()
 
     def action_fake_news(self, card_instance_id: str, fake_card_id: str):
         """Convert a card into fake news"""
