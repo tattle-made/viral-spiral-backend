@@ -229,7 +229,7 @@ class Player(InGameModel):
 
         recipients = card_instance.allowed_recipients()
         if to:
-            recipients = [rec for rec in recipients if rec.id in to]
+            recipients = [rec for rec in recipients if rec.id_ in to]
 
         for player in recipients:
             self.action_pass_card(
