@@ -173,6 +173,8 @@ class Game(Model):
         from .card import Card
         from .encyclopedia import Article
 
+        encyclopedia_filepath="config_jsons/example1/articles.json"
+
         # TODO create initial biases
         game = cls.create(name=name, **model_kwargs)
 

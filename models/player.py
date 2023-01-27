@@ -334,7 +334,8 @@ class Player(InGameModel):
         from .card import Card
 
         card = Card.select().where(Card.id_ == card_id, Card.game == self.game).first()
-        article = card.encyclopedia_article
+        article = Article.select().where(Article.title == card.description, Article.game == card.game).first()
+        # article = card.encyclopedia_article
         if article:
             return article.render()
         return {}
