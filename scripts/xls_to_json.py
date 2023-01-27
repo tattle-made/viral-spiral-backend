@@ -33,6 +33,9 @@ df = read_ods(ods_path, sheet_name)
 cards = []
 tgb = None
 
+def is_valid_cell(text):
+    return text and text.strip() and text.strip() != "null"
+
 for idx in df.index[1:]:
     row = df.loc[idx]
 
@@ -60,6 +63,8 @@ for idx in df.index[1:]:
         ],
         "tgb": tgb,
     }
+    if not is_valid_cell(factual_card["fakes"][0]["description"]):
+        factual_card["fakes"] = []
     cards.append(factual_card)
 
     # Bias cards
@@ -77,6 +82,8 @@ for idx in df.index[1:]:
             ],
             "tgb": tgb,
         }
+        if not is_valid_cell(bias_card["fakes"][0]["description"]):
+            bias_card["fakes"] = []
         cards.append(bias_card)
 
     # Topic cards
@@ -117,6 +124,10 @@ for idx in df.index[1:]:
             ],
             "tgb": tgb,
         }
+        if not is_valid_cell(pro_card["fakes"][0]["description"]):
+            pro_card["fakes"] = []
+        if not is_valid_cell(against_card["fakes"][0]["description"]):
+            against_card["fakes"] = []
         cards.append(pro_card)
         cards.append(against_card)
 
