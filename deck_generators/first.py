@@ -27,6 +27,7 @@ def draw(player: Player):
         Card.select()
         .where(Card.game == player.game)
         .where(Card.original_player == None)
+        .where(Card.original == None)
         .where(Card.storyline == card.storyline)
         .where(Card.tgb <= tgb)
         .order_by(Card.storyline_index)
