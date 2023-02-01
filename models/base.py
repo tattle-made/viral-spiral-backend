@@ -132,7 +132,9 @@ class Game(Model):
             round_ = Round.create(
                 game=self,
                 started=False,
-                full_round=FullRound.select().order_by(FullRound.created_at.desc()).first()
+                full_round=FullRound.select()
+                .order_by(FullRound.created_at.desc())
+                .first(),
             )
         return round_
 
@@ -155,12 +157,35 @@ class Game(Model):
             .count()
         )
 
+
+    @classmethod
+    def new_name(cls):
+        """Returns a new name for a new game"""
+        verbs = [
+            "obnoxious",
+            "odd",
+            "fun",
+            "smart",
+            "lazy"
+        ]
+        nouns = [
+            "cow",
+            "dog",
+            "cat",
+            "banana",
+            "router",
+        ]
+        number = "%04d" % random.randint(0, 9999)
+        name = f"{random.choice(verbs)}-{random.choice(nouns)}-{number}"
+        if cls.select().where(cls.name == name).exists():
+            return cls.new_name()
+        return name
+
     @classmethod
     # @profiling_utils.profile
     def new(
         cls,
-        name,
-        players: list[str],
+        player_count: int,
         colors_filepath: str,
         topics_filepath: str,
         cards_filepath: str,
@@ -173,7 +198,9 @@ class Game(Model):
         from .card import Card
         from .encyclopedia import Article
 
-        encyclopedia_filepath="config_jsons/example1/articles.json"
+        encyclopedia_filepath = "config_jsons/example1/articles.json"
+
+        name = cls.new_name()
 
         # TODO create initial biases
         game = cls.create(name=name, **model_kwargs)
@@ -186,13 +213,13 @@ class Game(Model):
         for topic_name in json.load(open(topics_filepath)):
             topic_objs.append(AffinityTopic.create(name=topic_name, game=game))
 
-        sequences = [x for x in range(1, len(players) + 1)]
+        sequences = [x for x in range(1, player_count + 1)]
         random.shuffle(sequences)
-        for idx, player_name in enumerate(players):
+        for idx in range(player_count):
             color = color_objs[0]
             color_objs = color_objs[1:] + [color_objs[0]]
             player = Player.create(
-                name=player_name, color=color, game=game, sequence=sequences[idx]
+                color=color, game=game, sequence=sequences[idx]
             )
 
         Card.import_from_json(
@@ -203,6 +230,17 @@ class Game(Model):
         )
 
         return game
+
+    def get_unclaimed_player(self):
+        """Returns a player that hasn't been claimed yet.
+
+        When a new user joins the game, they claim a player - and the 
+        name attribute of that player is set.
+        """
+        from .player import Player
+        return self.player_set.filter(
+            Player.name.is_null(True)
+        ).order_by(peewee.fn.Random()).first()
 
     def draw(self, player, full_round):
         from .player import Player

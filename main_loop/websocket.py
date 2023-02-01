@@ -235,13 +235,9 @@ class WebsocketGameRunner(GameRunner):
         return runner
 
     @classmethod
-    def create(cls, name: str, **game_kwargs):
+    def create(cls, **game_kwargs):
         """creates a game runner object"""
-        if runner := cls.get_by_name(name):
-            raise ValueError(f"Game already exists: {name}")
-
-        # create a new game
-        game = Game.new(name, **game_kwargs)
+        game = Game.new(**game_kwargs)
         return cls.get_by_game(game)
 
 
@@ -318,7 +314,15 @@ def join_game(message):
     player_name = message["player"]
     runner = WebsocketGameRunner.get_by_name(game_name)
     if runner:
-        player = runner.game.player_set.where(Player.name == player_name).get()
+        player = runner.game.get_unclaimed_player()
+        if not player:
+            return {
+                "status": 403,
+                "error": "No more players allowed"
+            }
+        player.name = player_name
+        player.save()
+
         if player.client_id == request.sid:
             return {"status": 200, "message": f"Already joined game {game_name}"}
         player.client_id = request.sid
@@ -339,8 +343,7 @@ def create_game(message):
         f"Incoming event - {inspect.getframeinfo(inspect.currentframe()).function} |"
         f" {message}"
     )
-    game_name = message["game"]
-    players = message["players"]
+    player_count = message["player_count"]
     colors_filepath = message["colors_filepath"]
     topics_filepath = message["topics_filepath"]
     password = message["password"]
@@ -349,8 +352,7 @@ def create_game(message):
     encyclopedia_filepath = message["encyclopedia_filepath"]
     try:
         runner = WebsocketGameRunner.create(
-            name=game_name,
-            players=players,
+            player_count=player_count,
             colors_filepath=colors_filepath,
             topics_filepath=topics_filepath,
             cards_filepath=cards_filepath,

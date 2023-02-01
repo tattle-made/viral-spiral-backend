@@ -30,7 +30,7 @@ class PlayerInitialAffinity(InGameModel):
 class Player(InGameModel):
     """A player in the game"""
 
-    name = peewee.CharField()
+    name = peewee.CharField(null=True)
     score = peewee.IntegerField(default=0)
     color = peewee.ForeignKeyField(Color)
     initial_bias = peewee.ForeignKeyField(
