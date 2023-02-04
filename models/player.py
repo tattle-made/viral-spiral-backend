@@ -316,25 +316,29 @@ class Player(InGameModel):
             raise NotFound(f"Card instance not found {card_instance_id}")
 
         if card_instance.card.fake:
-            # 1. Deduct points of last player to share this card
+            # Deduct points of last player to share this card
             Player.update(score=Player.score - 1).where(
                 Player.id_ == card_instance.from_.player.id
             ).execute()
-            # 2. Discard all instanes of this (fake) card going around
-            from .card_queue import PlayerCardQueue
+        # Discard all instanes of this (fake) card going around
+        from .card_queue import PlayerCardQueue
 
-            PlayerCardQueue.discard_card(card_instance.card)
-            card_instance.discarded = True
-            card_instance.save()
-            card_instance.card.discarded = True
-            card_instance.card.save()
+        PlayerCardQueue.discard_card(card_instance.card)
+        card_instance.discarded = True
+        card_instance.save()
+        card_instance.card.discarded = True
+        card_instance.card.save()
 
     def action_encyclopedia_search(self, card_id):
         """Returns this card's encyclopedia article"""
         from .card import Card
 
         card = Card.select().where(Card.id_ == card_id, Card.game == self.game).first()
-        article = Article.select().where(Article.title == card.description, Article.game == card.game).first()
+        article = (
+            Article.select()
+            .where(Article.title == card.description, Article.game == card.game)
+            .first()
+        )
         # article = card.encyclopedia_article
         if article:
             return article.render()
