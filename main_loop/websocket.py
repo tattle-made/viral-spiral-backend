@@ -147,7 +147,7 @@ class WebsocketGameRunner(GameRunner):
             },
             event="play_card",
         )
-        #self.send_to_game(self.game, {"player_name": player.name}, event="whos_turn")
+        # self.send_to_game(self.game, {"player_name": player.name}, event="whos_turn")
 
     def invoke_vote(self, player: Player, pending_vote: CancelVote):
         self.send_to_player(
@@ -193,7 +193,16 @@ class WebsocketGameRunner(GameRunner):
 
     def perform_action(self, player_name, action, **kwargs):
         player = self.game.player_set.where(Player.name == player_name).get()
-        return player.perform_action(action, **kwargs)
+        result = player.perform_action(action, **kwargs)
+        self.send_to_game(
+            self.game,
+            {
+                "action": action,
+                "player": model_to_dict(player),
+                "result": result,
+            },
+            "action_performed",
+        )
 
     def get_queued_card(self, player_name):
         player = self.game.player_set.where(Player.name == player_name).get()
@@ -316,10 +325,7 @@ def join_game(message):
     if runner:
         player = runner.game.get_unclaimed_player()
         if not player:
-            return {
-                "status": 403,
-                "error": "No more players allowed"
-            }
+            return {"status": 403, "error": "No more players allowed"}
         player.name = player_name
         player.save()
 
@@ -508,6 +514,7 @@ def error_handler(exc):
 
 def run():
     socketio.run(app, host="0.0.0.0", port=5000)
+
 
 if __name__ == "__main__":
     run()
