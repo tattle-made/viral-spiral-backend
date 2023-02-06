@@ -123,10 +123,12 @@ Events (incoming events):
 # Running Using Docker
 
 ```
-docker-comose up
+docker-compose up
 
+docker ps //to confirm if the services are running
 docker exec -it api /bin/sh
 pipenv shell
-pipenv sync
-python main_loop/websocket.py
+python setup.py // one time thing to run database database migrations
+./start.sh
 ```
+If you are on windows and are running into the `source: not found` error while running the `./start.sh` command, then instead of it try running `python main_loop/websocket.py`
