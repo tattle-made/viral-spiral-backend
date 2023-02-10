@@ -238,9 +238,11 @@ class Game(Model):
         name attribute of that player is set.
         """
         from .player import Player
-        return self.player_set.filter(
-            Player.name.is_null(True)
-        ).order_by(peewee.fn.Random()).first()
+        # Player.name.is_null was not selecting for empty varchar field
+        # peewee.fn.Random() isn't generating a valid sql syntax
+        # I implemented an acceptable solution. Once the syntax issues are
+        # resolved, we should revert to the original logic of ordering in random order 
+        return self.player_set.select().where(Player.name == "").order_by(Player.created_at.desc()).first()
 
     def draw(self, player, full_round):
         from .player import Player

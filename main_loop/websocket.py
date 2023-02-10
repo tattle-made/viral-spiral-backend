@@ -349,7 +349,7 @@ def create_game(message):
         f"Incoming event - {inspect.getframeinfo(inspect.currentframe()).function} |"
         f" {message}"
     )
-    player_count = message["player_count"]
+    player_count = int(message["player_count"])
     colors_filepath = message["colors_filepath"]
     topics_filepath = message["topics_filepath"]
     password = message["password"]
@@ -373,7 +373,9 @@ def create_game(message):
         }
     return {
         "status": 200,
-        "game_name": runner.name,
+        "game": {
+            "name" : runner.name
+        },
     }
 
 
