@@ -93,10 +93,11 @@ class GameRunner(ABC):
                 players = self.players.order_by(Player.sequence)
             for player in self.players.order_by(Player.sequence):
                 self.do_round(player, full_round)
-                if idx == 10:
-                    self.game.save()
-                    idx = 0
-                idx += 1
+                # if idx == 10:
+                #     self.game.save()
+                #     idx = 0
+                # idx += 1
+                self.game.save()
 
         self.exit()
 

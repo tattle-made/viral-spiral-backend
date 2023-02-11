@@ -157,17 +157,10 @@ class Game(Model):
             .count()
         )
 
-
     @classmethod
     def new_name(cls):
         """Returns a new name for a new game"""
-        verbs = [
-            "obnoxious",
-            "odd",
-            "fun",
-            "smart",
-            "lazy"
-        ]
+        verbs = ["obnoxious", "odd", "fun", "smart", "lazy"]
         nouns = [
             "cow",
             "dog",
@@ -218,9 +211,7 @@ class Game(Model):
         for idx in range(player_count):
             color = color_objs[0]
             color_objs = color_objs[1:] + [color_objs[0]]
-            player = Player.create(
-                color=color, game=game, sequence=sequences[idx]
-            )
+            player = Player.create(color=color, game=game, sequence=sequences[idx])
 
         Card.import_from_json(
             json_path=cards_filepath, defaults={"game_id": str(game.id_)}
@@ -234,15 +225,21 @@ class Game(Model):
     def get_unclaimed_player(self):
         """Returns a player that hasn't been claimed yet.
 
-        When a new user joins the game, they claim a player - and the 
+        When a new user joins the game, they claim a player - and the
         name attribute of that player is set.
         """
         from .player import Player
+
         # Player.name.is_null was not selecting for empty varchar field
         # peewee.fn.Random() isn't generating a valid sql syntax
         # I implemented an acceptable solution. Once the syntax issues are
-        # resolved, we should revert to the original logic of ordering in random order 
-        return self.player_set.select().where(Player.name == "").order_by(Player.created_at.desc()).first()
+        # resolved, we should revert to the original logic of ordering in random order
+        return (
+            self.player_set.select()
+            .where((Player.name == "") | (Player.name.is_null()))
+            .order_by(Player.created_at.desc())
+            .first()
+        )
 
     def draw(self, player, full_round):
         from .player import Player
