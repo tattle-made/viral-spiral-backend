@@ -34,7 +34,7 @@ class Card(InGameModel):
     # Each fake news card can have an "original" card - linked in the original
     # field. All fake news cards with the same original card form a pool - and
     # ideally the user can select between any of these.
-    fake = peewee.BooleanField()
+    fake = peewee.BooleanField(default=False)
     original = peewee.ForeignKeyField("self", backref="fakes", null=True)
     faked_by = peewee.ForeignKeyField(Player, null=True)
 

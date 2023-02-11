@@ -58,25 +58,27 @@ class GameRunner(ABC):
             # self.logger.info("Looping")
             self.socketio.sleep(1)
             done = True
-            for player in self.players.iterator():
-                # TODO see if you can optimise this in a single query
-                # if CancelStatus.cancelled(player):
-                #     continue
-                if (card_instance := player.get_queued_card_instance()) is not None:
-                    self.invoke_player_action(player, card_instance)
-                    done = False
-                if (pending_vote := player.get_pending_cancel_vote()) is not None:
-                    self.invoke_vote(player, pending_vote)
-                    done = False
-                # TODO see if you really need to update powers after each turn
-                # self.game.update_powers()
+            with db:
+                for player in self.players.iterator():
+                    # TODO see if you can optimise this in a single query
+                    # if CancelStatus.cancelled(player):
+                    #     continue
+                    if (card_instance := player.get_queued_card_instance()) is not None:
+                        self.invoke_player_action(player, card_instance)
+                        done = False
+                    if (pending_vote := player.get_pending_cancel_vote()) is not None:
+                        self.invoke_vote(player, pending_vote)
+                        done = False
+                    # TODO see if you really need to update powers after each turn
+                    # self.game.update_powers()
             if done:
                 break
 
     def do_round(self, drawing_player: Player, full_round: FullRound):
         """Performs a round in `game` with `drawing_player` drawing a card"""
         self.finish_round(drawing_player)  # Finish any older rounds
-        card_instance = self.game.draw(drawing_player, full_round=full_round)
+        with db:
+            card_instance = self.game.draw(drawing_player, full_round=full_round)
         self.finish_round(drawing_player)
 
     def exit(self):
@@ -84,18 +86,19 @@ class GameRunner(ABC):
         pass
 
     def loop(self):
-        with db:
-            while self.game.active():
+        while self.game.active():
+            with db:
                 idx = 0
                 full_round = FullRound.create(game=self.game)
-                for player in self.players.order_by(Player.sequence):
-                    self.do_round(player, full_round)
-                    if idx == 10:
-                        self.game.save()
-                        idx = 0
-                    idx += 1
+                players = self.players.order_by(Player.sequence)
+            for player in self.players.order_by(Player.sequence):
+                self.do_round(player, full_round)
+                if idx == 10:
+                    self.game.save()
+                    idx = 0
+                idx += 1
 
-            self.exit()
+        self.exit()
 
     @classmethod
     def send_to_player(cls, player: Player, data: dict = None, event: str = None):
