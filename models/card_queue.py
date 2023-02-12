@@ -49,7 +49,7 @@ class PlayerCardQueue(InGameModel):
         ).execute()
 
     @classmethod
-    def discard_card(cls, card):
+    def mark_as_fake(cls, card):
         """Dequeues all instances for a given card"""
         ids = [
             x.id_

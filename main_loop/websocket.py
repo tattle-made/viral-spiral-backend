@@ -131,7 +131,7 @@ class WebsocketGameRunner(GameRunner):
     @classmethod
     def send_to_player(cls, player: Player, data=None, event="text_response"):
         json.dumps(data)  # If data isn't json dumpable, raise the error here
-        logging.info(f"Emmitting to player {player.name} - event {event}")
+        logging.info(f"Emmitting to player {player.name} - event {event} | game {player.game.name}")
         if player.client_id:
             cls.emit_async(event, {"data": data}, to=player.client_id)
 

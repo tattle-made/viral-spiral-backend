@@ -189,10 +189,6 @@ class Player(InGameModel):
         )
         to_player.event_receive_card(to_card_instance)
 
-        return {
-            "passed_to": model_to_dict(to_player),
-        }
-
         # Dequeue this card
         if dequeue:
             from .card_queue import PlayerCardQueue
@@ -211,6 +207,10 @@ class Player(InGameModel):
             Player.update(score=Player.score - 1).where(
                 Player.color == card_instance.card.bias_against
             )
+
+        return {
+            "passed_to": model_to_dict(to_player),
+        }
 
     def action_viral_spiral(
         self,
@@ -332,7 +332,7 @@ class Player(InGameModel):
         # Discard all instanes of this (fake) card going around
         from .card_queue import PlayerCardQueue
 
-        PlayerCardQueue.discard_card(card_instance.card)
+        PlayerCardQueue.mark_as_fake(card_instance.card)
         card_instance.discarded = True
         card_instance.save()
         card_instance.card.discarded = True
