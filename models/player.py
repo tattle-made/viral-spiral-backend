@@ -46,7 +46,8 @@ class Player(InGameModel):
 
     class Meta:
         # Unique together
-        indexes = ((("sequence", "game"), True),)
+        indexes = ((("sequence", "game"), True),
+                  (("name", "game"), True),)
 
     def bias(self, against: Color) -> int:
         """Returns the bias of this player against a given color"""

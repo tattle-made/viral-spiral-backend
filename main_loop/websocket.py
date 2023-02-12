@@ -323,11 +323,13 @@ def join_game(message):
     player_name = message["player"]
     runner = WebsocketGameRunner.get_by_name(game_name)
     if runner:
-        player = runner.game.get_unclaimed_player()
+        player = runner.game.get_player_by_name(player_name=player_name)
         if not player:
-            return {"status": 403, "error": "No more players allowed"}
-        player.name = player_name
-        player.save()
+            player = runner.game.get_unclaimed_player(player_name=player_name)
+            if not player:
+                return {"status": 403, "error": "No more players allowed"}
+            player.name = player_name.strip().lower()
+            player.save()
 
         if player.client_id == request.sid:
             return {"status": 200, "message": f"Already joined game {game_name}"}
@@ -373,9 +375,7 @@ def create_game(message):
         }
     return {
         "status": 200,
-        "game": {
-            "name" : runner.name
-        },
+        "game": {"name": runner.name},
     }
 
 
