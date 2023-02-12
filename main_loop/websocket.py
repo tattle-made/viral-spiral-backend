@@ -204,6 +204,7 @@ class WebsocketGameRunner(GameRunner):
             },
             "action_performed",
         )
+        return result
 
     def get_queued_card(self, player_name):
         player = self.game.player_set.where(Player.name == player_name).get()

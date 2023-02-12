@@ -46,8 +46,10 @@ class Player(InGameModel):
 
     class Meta:
         # Unique together
-        indexes = ((("sequence", "game"), True),
-                  (("name", "game"), True),)
+        indexes = (
+            (("sequence", "game"), True),
+            (("name", "game"), True),
+        )
 
     def bias(self, against: Color) -> int:
         """Returns the bias of this player against a given color"""
@@ -187,6 +189,10 @@ class Player(InGameModel):
         )
         to_player.event_receive_card(to_card_instance)
 
+        return {
+            "passed_to": model_to_dict(to_player),
+        }
+
         # Dequeue this card
         if dequeue:
             from .card_queue import PlayerCardQueue
@@ -238,6 +244,8 @@ class Player(InGameModel):
                 to_player=player,
                 dequeue=False,
             )
+
+        return {"passed_to": [model_to_dict(player) for player in recipients]}
 
         # Dequeue this card
         from .card_queue import PlayerCardQueue
