@@ -121,6 +121,10 @@ class Game(Model):
                 return False
         return True
 
+    def started(self):
+        """Checks if all players have joined"""
+        return not self.get_unclaimed_player()
+
     def heartbeat(self):
         """Sends an about event to the game room"""
         self.runner.send_to_game(game=self, data=self.about(), event="heartbeat")
@@ -230,7 +234,7 @@ class Game(Model):
             peewee.fn.Lower(Player.name) == player_name.strip().lower()
         ).first()
 
-    def get_unclaimed_player(self, player_name: str):
+    def get_unclaimed_player(self, player_name: str = None):
         """Returns a player that hasn't been claimed yet.
 
         When a new user joins the game, they claim a player - and the
@@ -242,9 +246,7 @@ class Game(Model):
         # peewee.fn.Random() isn't generating a valid sql syntax
         # I implemented an acceptable solution. Once the syntax issues are
         # resolved, we should revert to the original logic of ordering in random order
-        if self.player_set.where(
-            peewee.fn.Lower(Player.name) == player_name.strip().lower()
-        ):
+        if player_name and self.get_player_by_name(player_name):
             raise ValueError("Player has already joined")
 
         return (
@@ -296,6 +298,8 @@ class Game(Model):
             if current_player
             else None,
             "total_global_bias": self.total_global_bias(),
+            "started": self.started(),
+            "active": self.active(),
         }
 
     def update_powers(self):
