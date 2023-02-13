@@ -22,6 +22,7 @@ from models.utils import model_to_dict
 import cProfile
 import sys
 
+from constants import GAME_CREATION_TOTAL_TRIES
 from models import Game, Player, Card, CardInstance, CancelVote, FullRound
 from models.messages import (
     ERROR_GENERIC,
@@ -131,7 +132,10 @@ class WebsocketGameRunner(GameRunner):
     @classmethod
     def send_to_player(cls, player: Player, data=None, event="text_response"):
         json.dumps(data)  # If data isn't json dumpable, raise the error here
-        logging.info(f"Emmitting to player {player.name} - event {event} | game {player.game.name}")
+        logging.info(
+            f"Emmitting to player {player.name} - event {event} | game"
+            f" {player.game.name}"
+        )
         if player.client_id:
             cls.emit_async(event, {"data": data}, to=player.client_id)
 
@@ -360,16 +364,26 @@ def create_game(message):
     draw_fn_name = message["draw_fn_name"]
     cards_filepath = message["cards_filepath"]
     encyclopedia_filepath = message["encyclopedia_filepath"]
+
+    def create_with_retry():
+        exception = None
+        for _ in range(GAME_CREATION_TOTAL_TRIES):
+            try:
+                return WebsocketGameRunner.create(
+                    player_count=player_count,
+                    colors_filepath=colors_filepath,
+                    topics_filepath=topics_filepath,
+                    cards_filepath=cards_filepath,
+                    encyclopedia_filepath=encyclopedia_filepath,
+                    password=password,
+                    draw_fn_name=draw_fn_name,
+                )
+            except Exception as exc:
+                exception = exc
+        raise exception
+
     try:
-        runner = WebsocketGameRunner.create(
-            player_count=player_count,
-            colors_filepath=colors_filepath,
-            topics_filepath=topics_filepath,
-            cards_filepath=cards_filepath,
-            encyclopedia_filepath=encyclopedia_filepath,
-            password=password,
-            draw_fn_name=draw_fn_name,
-        )
+        runner = create_with_retry()
     except ValueError as exc:
         return {
             "status": 500,

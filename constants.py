@@ -25,3 +25,6 @@ PLAYER_WIN_SCORE = 10
 TGB_END_SCORE = 10
 
 SOCKET_EVENT_ENC_SEARCH_RESULT = "encyclopedia_search_result"
+
+# Game creation retries
+GAME_CREATION_TOTAL_TRIES = 2
