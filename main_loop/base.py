@@ -92,6 +92,8 @@ class GameRunner(ABC):
         while self.game.active() and not self.game.started():
             # All players have not joined
             self.socketio.sleep(1)
+            # Send the heartbeat
+            self.game.heartbeat()
             # TODO add a timeout of 5 minutes
             continue
 
