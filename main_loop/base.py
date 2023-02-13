@@ -59,9 +59,6 @@ class GameRunner(ABC):
             self.socketio.sleep(1)
             done = True
             with db:
-                if not self.game.started():
-                    # All players have not joined
-                    continue
                 for player in self.players.iterator():
                     # TODO see if you can optimise this in a single query
                     # if CancelStatus.cancelled(player):
@@ -89,6 +86,12 @@ class GameRunner(ABC):
         pass
 
     def loop(self):
+        while self.game.active() and not self.game.started():
+            # All players have not joined
+            self.socketio.sleep(1)
+            # TODO add a timeout of 5 minutes
+            continue
+
         while self.game.active():
             with db:
                 idx = 0

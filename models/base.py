@@ -12,7 +12,7 @@ import peeweedbevolve
 
 # import profiling_utils
 
-from constants import PLAYER_WIN_SCORE
+from constants import PLAYER_WIN_SCORE, TGB_END_SCORE
 
 # TODO shift these to environment variables
 
@@ -116,9 +116,14 @@ class Game(Model):
 
     def active(self):
         # TODO implement this
+        # TODO add timeout
         for player in self.player_set:
             if player.score >= PLAYER_WIN_SCORE:
                 return False
+
+        if self.total_global_bias() >= TGB_END_SCORE:
+            return False
+
         return True
 
     def started(self):
