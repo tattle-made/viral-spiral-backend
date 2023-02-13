@@ -50,6 +50,9 @@ class GameRunner(ABC):
             return
 
         while True:
+            # First send out the heartbeat
+            self.game.heartbeat()
+
             logging.info("doing round")
             self.game.update_powers()
             if not self.game.active():
@@ -93,8 +96,6 @@ class GameRunner(ABC):
             continue
 
         while self.game.active():
-            self.socketio.sleep(1)
-            self.game.heartbeat()
             with db:
                 idx = 0
                 full_round = FullRound.create(game=self.game)
