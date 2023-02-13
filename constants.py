@@ -1,5 +1,8 @@
 """Constants. Used to configure the game"""
 
+# Number of affinity topics in a game
+NUM_AFFINITY_TOPICS = 2
+
 # If the affinity towards any topic reaches this count, the player gains the
 # viral spiral power
 VIRAL_SPIRAL_AFFINITY_COUNT = 0

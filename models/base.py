@@ -12,7 +12,7 @@ import peeweedbevolve
 
 # import profiling_utils
 
-from constants import PLAYER_WIN_SCORE, TGB_END_SCORE
+from constants import PLAYER_WIN_SCORE, TGB_END_SCORE, NUM_AFFINITY_TOPICS
 
 # TODO shift these to environment variables
 
@@ -212,7 +212,9 @@ class Game(Model):
             color_objs.append(Color.create(name=color_name, game=game))
 
         topic_objs = []
-        for topic_name in json.load(open(topics_filepath)):
+        all_topic_objs = json.load(open(topics_filepath))
+        selected_topic_objs = random.choices(all_topic_objs, k=NUM_AFFINITY_TOPICS)
+        for topic_name in selected_topic_objs:
             topic_objs.append(AffinityTopic.create(name=topic_name, game=game))
 
         sequences = [x for x in range(1, player_count + 1)]
