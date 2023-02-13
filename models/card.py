@@ -104,7 +104,11 @@ class Card(InGameModel):
             return
         created = cls.create(**dict_)
         if affinity_towards:
-            topic, _ = AffinityTopic.get_or_create(name=affinity_towards, **defaults)
+            try:
+                topic = AffinityTopic.get(name=affinity_towards, **defaults)
+            except AffinityTopic.DoesNotExist:
+                # Skip this card
+                return
             created.affinity_towards_id = topic.id_
         if bias_against:
             color, _ = Color.get_or_create(name=bias_against, **defaults)
