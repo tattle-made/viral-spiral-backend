@@ -93,6 +93,8 @@ class GameRunner(ABC):
             continue
 
         while self.game.active():
+            self.socketio.sleep(1)
+            self.game.heartbeat()
             with db:
                 idx = 0
                 full_round = FullRound.create(game=self.game)

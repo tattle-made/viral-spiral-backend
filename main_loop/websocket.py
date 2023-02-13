@@ -265,11 +265,6 @@ def background_thread():
         try:
             socketio.sleep(0.1)
             count += 1
-            if count % (ticker_interval_secs * 10) == 0:
-                # for game in Game.select().where(Game.ended == False).all():
-                #     game.heartbeat()
-                # TODO fix heartbeat
-                pass
             if count % (action_interval_secs * 10) == 0:
                 WebsocketGameRunner.flush_emit_queue()
         except Exception as exc:

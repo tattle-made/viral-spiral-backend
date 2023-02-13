@@ -132,7 +132,7 @@ class Game(Model):
 
     def heartbeat(self):
         """Sends an about event to the game room"""
-        self.runner.send_to_game(game=self, data=self.about(), event="heartbeat")
+        self.runner.send_to_game(game=self, data=self.about(), event="about_game")
 
     @property
     def current_round(self):
