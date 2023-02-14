@@ -57,4 +57,4 @@ class PlayerCardQueue(InGameModel):
             .join(CardInstance)
             .where(CardInstance.card == card)
         ]
-        cls.update(acive=False).where(cls.id_.in_(ids))
+        cls.update(active=False).where(cls.id_.in_(ids))
