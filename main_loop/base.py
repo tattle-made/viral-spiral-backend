@@ -59,7 +59,6 @@ class GameRunner(ABC):
                 self.logger.info("Game has ended")
                 return
             # self.logger.info("Looping")
-            self.socketio.sleep(1)
             done = True
             with db:
                 for player in self.players.iterator():
@@ -76,6 +75,7 @@ class GameRunner(ABC):
                     # self.game.update_powers()
             if done:
                 break
+            self.socketio.sleep(1)
 
     def do_round(self, drawing_player: Player, full_round: FullRound):
         """Performs a round in `game` with `drawing_player` drawing a card"""
