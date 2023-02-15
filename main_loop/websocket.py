@@ -292,6 +292,11 @@ def index():
     """Renders the main page of the game"""
     return render_template("index.html", async_mode=socketio.async_mode)
 
+@app.route("/health")
+def health_check():
+    """Returns an OK"""
+    return "OK\n"
+
 
 @socketio.event
 def about_game(message):
