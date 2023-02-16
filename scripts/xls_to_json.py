@@ -33,8 +33,10 @@ df = read_ods(ods_path, sheet_name)
 cards = []
 tgb = None
 
+
 def is_valid_cell(text):
     return text and text.strip() and text.strip() != "null"
+
 
 for idx in df.index[1:]:
     row = df.loc[idx]
@@ -62,6 +64,7 @@ for idx in df.index[1:]:
             }
         ],
         "tgb": tgb,
+        "image": row.iloc[use_iloc()],
     }
     if not is_valid_cell(factual_card["fakes"][0]["description"]):
         factual_card["fakes"] = []
@@ -73,17 +76,12 @@ for idx in df.index[1:]:
             "title": "",
             "description": row.iloc[use_iloc()],
             "bias_against": color,
-            "fakes": [
-                {
-                    "title": "",
-                    "description": row.iloc[use_iloc()],
-                    "bias_against": color,
-                }
-            ],
+            "fakes": [],
             "tgb": tgb,
+            "image": row.iloc[use_iloc()],
         }
-        if not is_valid_cell(bias_card["fakes"][0]["description"]):
-            bias_card["fakes"] = []
+        # if not is_valid_cell(bias_card["fakes"][0]["description"]):
+        #     bias_card["fakes"] = []
         cards.append(bias_card)
 
     # Topic cards
@@ -108,6 +106,7 @@ for idx in df.index[1:]:
                 }
             ],
             "tgb": tgb,
+            "image": row.iloc[use_iloc()],
         }
         against_card = {
             "title": "",
@@ -123,6 +122,7 @@ for idx in df.index[1:]:
                 }
             ],
             "tgb": tgb,
+            "image": row.iloc[use_iloc()],
         }
         if not is_valid_cell(pro_card["fakes"][0]["description"]):
             pro_card["fakes"] = []
