@@ -82,6 +82,8 @@ class GameRunner(ABC):
         self.finish_round(drawing_player)  # Finish any older rounds
         with db:
             card_instance = self.game.draw(drawing_player, full_round=full_round)
+            if not card_instance:
+                raise Exception("Out of cards!")
         self.finish_round(drawing_player)
 
     def exit(self):
