@@ -100,17 +100,24 @@ class Card(InGameModel):
         fakes = dict_.pop("fakes", [])
         affinity_towards = dict_.pop("affinity_towards", None)
         bias_against = dict_.pop("bias_against", None)
+
         dict_.update(defaults)
         if not dict_.get("description"):
             return
-        created = cls.create(**dict_)
+
+        topic = None
         if affinity_towards:
             try:
                 topic = AffinityTopic.get(name=affinity_towards, **defaults)
             except AffinityTopic.DoesNotExist:
                 # Skip this card
                 return
+
+        created = cls.create(**dict_)
+
+        if affinity_towards:
             created.affinity_towards_id = topic.id_
+
         if bias_against:
             color, _ = Color.get_or_create(name=bias_against, **defaults)
             created.bias_against_id = color.id_
