@@ -153,6 +153,12 @@ class Game(Model):
 
     def add_round(self, full_round):
         """Adds a round to this came"""
+        unstarted_round = self.round_set.where(Round.started == False).first()
+        if unstarted_round:
+            unstarted_round.started = True
+            unstarted_round.save()
+            return unstarted_round
+
         round_ = Round.create(game=self, full_round=full_round, started=True)
 
     def total_global_bias(self):
