@@ -101,8 +101,11 @@ class GameRunner(ABC):
             with db:
                 idx = 0
                 full_round = FullRound.create(game=self.game)
-                players = self.players.order_by(Player.sequence)
-            for player in self.players.order_by(Player.sequence):
+                players = [player for player in self.players]
+                ordered_players = sorted(players, key=lambda player: player.sequence)
+            for player in ordered_players:
+                # Re fetch the player once
+                player = self.players.select().where(Player.id_ == player.id_).first()
                 self.do_round(player, full_round)
                 # if idx == 10:
                 #     self.game.save()
