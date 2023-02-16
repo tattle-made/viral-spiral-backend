@@ -332,9 +332,10 @@ class Player(InGameModel):
         # Discard all instanes of this (fake) card going around
         from .card_queue import PlayerCardQueue
 
-        PlayerCardQueue.mark_as_fake(card_instance.card)
         card_instance.discarded = True
         card_instance.save()
+
+        PlayerCardQueue.mark_as_fake(card_instance.card)
         card_instance.card.discarded = True
         card_instance.card.save()
 
