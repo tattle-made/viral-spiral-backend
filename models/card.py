@@ -90,6 +90,7 @@ class Card(InGameModel):
         )
         self.original_player = player
         self.save()
+        card_instance.set_dynamic()
         player.event_receive_card(card_instance)
         return card_instance
 
@@ -113,7 +114,9 @@ class Card(InGameModel):
         if bias_against:
             color, _ = Color.get_or_create(name=bias_against, **defaults)
             created.bias_against_id = color.id_
+
         created.save()
+
         for fake in fakes:
             fake["original_id"] = created.id_
             cls.create_from_dict(fake, defaults)
@@ -166,12 +169,44 @@ class CardInstance(InGameModel):
         dict_["card"] = self.card.to_dict()
         return dict_
 
+    def set_dynamic(self):
+        """Replaces variables with dynamic data"""
+        start_index = self.card.description.find("(")
+        end_index = self.card.description.find(")")
+
+        if not (start_index and end_index):
+            return
+
+        variable = self.card.description[start_index + 1 : end_index]
+        variable = variable.lower().strip()
+
+        if variable == "other community":
+            color = self.game.color_set.where(Color.id_ != self.player.color_id)
+            self.card.description = (
+                self.card.description[: start_index + 1]
+                + color.name
+                + self.card.description[end_index:]
+            )
+            self.bias_against = color
+            self.card.save()
+        elif variable == "oppressed community":
+            # TODO selec an oppressed community
+            color = self.game.color_set.where(Color.id_ != self.player.color_id)
+            self.card.description = (
+                self.card.description[: start_index + 1]
+                + color.name
+                + self.card.description[end_index:]
+            )
+            self.bias_against = color
+            self.card.save()
+
     def create_fake_news(self, fake: Card):
         """Changes the details of the card"""
         assert fake in self.card.fakes
         self.card = fake
         self.card.faked_by = self.player
         self.card.save()
+        self.set_dynamic()
         self.save()
 
     def allowed_recipients(self):
