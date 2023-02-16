@@ -5,8 +5,8 @@ NUM_AFFINITY_TOPICS = 2
 
 # If the affinity towards any topic reaches this count, the player gains the
 # viral spiral power
-VIRAL_SPIRAL_AFFINITY_COUNT = 0
-VIRAL_SPIRAL_BIAS_COUNT = 0
+VIRAL_SPIRAL_AFFINITY_COUNT = 5
+VIRAL_SPIRAL_BIAS_COUNT = 5
 
 # If the affinity towards any topic reaches 3, the player receives the
 # cancel power
@@ -20,9 +20,9 @@ FAKE_NEWS_BIAS_COUNT = 0
 ACTIVE_STR = "active"
 
 # If a player reaches a number of points, they win and the game ends
-PLAYER_WIN_SCORE = 10
+PLAYER_WIN_SCORE = 8
 # If the TBG reaches a number of points, the game ends
-TGB_END_SCORE = 10
+TGB_END_SCORE = 8
 
 SOCKET_EVENT_ENC_SEARCH_RESULT = "encyclopedia_search_result"
 
