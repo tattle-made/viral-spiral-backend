@@ -14,11 +14,12 @@ import random
 global buttons
 buttons = ["Keep", "Discard", "paul", "john", "george", "ringo"]
 options = webdriver.ChromeOptions()
+# options.add_argument("--headless")
 
 global new_player
 def new_player(room_name, player_name):
     driver_player_name = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options = options)
-    driver_player_name.get('http://localhost:5173/')
+    driver_player_name.get('http://viralspiral.net/')
     sleep(2)
     player_username = driver_player_name.find_element('xpath', '//input[contains(@class, "join-room-me")]')
     player_room_name = driver_player_name.find_element('xpath', '//input[contains(@class, "join-room-game")]')
@@ -33,8 +34,8 @@ def new_player(room_name, player_name):
     while True:
         
         try: 
-            game_end_text_player = driver_player_name.find_element("xpath",'//h3[contains(text(),"Game Finished")]')
-            if game_end_text_player.text == "Game Finished":
+            current_global_bias_player = driver_player_name.find_element("xpath",'//h3[contains(text(),"Global Bias")]')
+            if current_global_bias_player.text == "Global Bias : 3":
                 break
         except NoSuchElementException:
             pass
@@ -46,15 +47,15 @@ def new_player(room_name, player_name):
                 
                 
                 driver_player_name.refresh()
-                sleep(2)
+                sleep(10)
                 player_choice_button = driver_player_name.find_element("xpath",'//button[contains(text(),"{}")]'.format(player_choice))
                 player_card_text = driver_player_name.find_element("xpath",'//div[contains(@class,"card-text")]'.format(player_choice)) 
-                sleep(2)
+                sleep(1)
                 
                 print(str(player_name) + " sends the card to " + str(player_choice))
                 print("the card text is: " + str(player_card_text.text))
                 player_choice_button.click()
-                sleep(2)
+                sleep(1)
             
 
 
@@ -67,7 +68,7 @@ def new_player(room_name, player_name):
             # print(str(player_name) + " be waiting")
             continue
     
-    sleep(5)
+    sleep(2)
     driver_player_name.quit()
 
 if __name__ == '__main__' :
@@ -80,7 +81,7 @@ if __name__ == '__main__' :
 
 
 
-    driver_john.get('http://localhost:5173/')
+    driver_john.get('http://viralspiral.net/')
     sleep(5)
 
     try:
@@ -98,7 +99,7 @@ if __name__ == '__main__' :
         driver_john.maximize_window()
         create_room = driver_john.find_element('xpath', '//button[contains(@class, "new-room-create")]')
         create_room.click()
-        sleep(10)
+        sleep(20)
 
         # page = driver_john.current_url
         # driver_john.get()
@@ -120,8 +121,9 @@ if __name__ == '__main__' :
         print('parallel function executing')
         while True:
             try: 
-                game_end_text = driver_john.find_element("xpath",'//h3[contains(text(),"Game Finished")]')
-                if game_end_text.text == "Game Finished":
+                # game_end_text = driver_john.find_element("xpath",'//h3[contains(text(),"Game Finished")]')
+                current_global_bias = driver_john.find_element("xpath",'//h3[contains(text(),"Global Bias")]')
+                if current_global_bias.text == "Global Bias : 3":
                     break
             except NoSuchElementException:
                 pass
@@ -132,15 +134,15 @@ if __name__ == '__main__' :
                 if(player_choice != "john"):
                     
                     driver_john.refresh()
-                    sleep(2)
+                    sleep(10)
                     
                     player_choice_button = driver_john.find_element("xpath",'//button[contains(text(),"{}")]'.format(player_choice))
                     card_text = driver_john.find_element("xpath",'//div[contains(@class,"card-text")]'.format(player_choice)) 
-                    sleep(2)
+                    sleep(1)
                     print("john sends the card to " + str(player_choice))
                     print("the card text is: " + str(card_text.text))
                     player_choice_button.click()
-                    sleep(2)
+                    sleep(1)
             except NoSuchElementException:
                 sleep(1)
                 # print("john be waiting")
@@ -153,7 +155,7 @@ if __name__ == '__main__' :
         p_george.join()
         p_paul.join()
         p_ringo.join()
-        sleep(5)
+        sleep(2)
         global_bias = driver_john.find_element("xpath",'//h3[contains(text(),"Global Bias")]')
         print("Final " + str(global_bias.text))
         print('Success! :-)')  
