@@ -169,6 +169,7 @@ class Game(Model):
         return (
             self.card_set.where(Card.original_player.is_null(False))
             .where(Card.bias_against.is_null(False))
+            .where(fn.Count(card.card_instances) > 1)
             .count()
         )
 
