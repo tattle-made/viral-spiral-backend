@@ -132,3 +132,18 @@ python setup.py // one time thing to run database database migrations
 ./start.sh
 ```
 If you are on windows and are running into the `source: not found` error while running the `./start.sh` command, then instead of it try running `python main_loop/websocket.py`
+
+# End to end testing
+
+The file(s) for end to end testing currently are: `game-creator.py`
+
+Run the following commands to run them:
+
+```
+pipenv shell
+pip install selenium
+pip install webdriver_manager
+python game-creator.py | tee output1.txt
+```
+
+The file `game-creator.py` should run multiple instances of chrome on your browser and simulate the game with 4 players players playing. You will find the log of the game inside the `output1.txt` file at the end of the game. 
