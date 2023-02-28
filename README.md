@@ -131,6 +131,7 @@ pipenv shell
 python setup.py // one time thing to run database database migrations
 ./start.sh
 ```
+
 If you are on windows and are running into the `source: not found` error while running the `./start.sh` command, then instead of it try running `python main_loop/websocket.py`
 
 # End to end testing
@@ -146,4 +147,15 @@ pip install webdriver_manager
 python game-creator.py | tee output1.txt
 ```
 
-The file `game-creator.py` should run multiple instances of chrome on your browser and simulate the game with 4 players players playing. You will find the log of the game inside the `output1.txt` file at the end of the game. 
+The file `game-creator.py` should run multiple instances of chrome on your browser and simulate the game with 4 players players playing. You will find the log of the game inside the `output1.txt` file at the end of the game.
+
+# Debugging
+
+These instructions are useful when you are running the server inside a docker container and using VS code as your IDE. We'll use `debugpy` as the debugger.
+
+1. Run `pip install debugpy` inside your container.
+2. Run `pipenv shell`
+3. Run `python -m debugpy --listen 0.0.0.0:5678 --wait-for-client main_loop/websocket.py`
+4. Open VS code and go to the Run and Debug screen. Click on the play button and choose "debugpy" to connect to the server.
+
+You should be able to set breakpoints now. Configuration for connecting to the remote host can be seen in `.vscode/launch.json`

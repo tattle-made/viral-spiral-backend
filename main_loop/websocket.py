@@ -30,7 +30,6 @@ from models.messages import (
 )
 
 from main_loop.base import GameRunner
-
 root_logger = logging.getLogger("root")
 
 # Set this variable to "threading", "eventlet" or "gevent" to test the
@@ -384,6 +383,7 @@ def create_game(message):
 
     try:
         runner = create_with_retry()
+        join_room(runner.name)
     except ValueError as exc:
         return {
             "status": 500,
@@ -490,7 +490,8 @@ def my_ping(message=None):
         f"Incoming event - {inspect.getframeinfo(inspect.currentframe()).function} |"
         f" {message}"
     )
-    emit("my_pong")
+    emit("my_pong", message)
+    return message
 
 
 @socketio.event
@@ -502,7 +503,7 @@ def my_echo(message):
     message["echo"] = True
     emit("text_response", message)
 
-
+  
 @socketio.event
 def connect(message=None):
     logging.info(
