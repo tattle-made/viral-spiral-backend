@@ -19,6 +19,7 @@ def draw(player: Player):
         .where(Card.game == player.game)
         .where(Card.original_player == None)
         .where(Card.tgb <= tgb)
+        .where(Card.bias_against != player.color)
         .first()
     )
 
@@ -30,6 +31,7 @@ def draw(player: Player):
         .where(Card.original == None)
         .where(Card.storyline == card.storyline)
         .where(Card.tgb <= tgb)
+        .where(Card.bias_against != player.color)
         .order_by(Card.storyline_index)
         .first()
     )
