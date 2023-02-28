@@ -207,7 +207,6 @@ class Game(Model):
         from .counters import Color, AffinityTopic
         from .card import Card
         from .encyclopedia import Article
-        import time
 
         encyclopedia_filepath = "config_jsons/example1/articles.json"
 
@@ -233,17 +232,13 @@ class Game(Model):
             color_objs = color_objs[1:] + [color_objs[0]]
             player = Player.create(color=color, game=game, sequence=sequences[idx])
 
-        t1 =  time.time()
         Card.import_from_json(
             json_path=cards_filepath, defaults={"game_id": str(game.id_)}
         )
-        print ("time to create cards : ", time.time()-t1)
-
-        t2 = time.time()
         Article.import_from_json(
             json_path=encyclopedia_filepath, defaults={"game_id": str(game.id_)}
         )
-        print ("time to create encyclopedia : ", time.time()-t2)
+        
 
         return game
 
@@ -299,9 +294,6 @@ class Game(Model):
     def about(self):
         """Returns a dictionary about this game"""
         from .player import Player
-        import time
-
-        t1 = time.time()
         current_player = self.player_set.where(Player.current == True).first()
 
         players = []
@@ -310,8 +302,6 @@ class Game(Model):
             dict_["affinities"] = player.all_affinities()
             dict_["biases"] = player.all_biases()
             players.append(dict_)
-
-        print("about : ", time.time()-t1)
 
         return {
             "name": self.name,
