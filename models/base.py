@@ -163,16 +163,15 @@ class Game(Model):
 
     def total_global_bias(self):
         """Total global bias of the game"""
-        # Total number of biased cards which have bene passed at least once
-        from models import Card, CardInstance
+        # Sum of all bias points
+        from models import Player
+        tgb = 0
+        for player in self.player_set:
+            for bias in player.all_biases().values():
+                tgb+=bias
 
-        return (
-            self.card_set.join(CardInstance)
-            .where(Card.original_player.is_null(False))
-            .where(Card.bias_against.is_null(False))
-            .group_by(Card.id_)
-            .count()
-        )
+        return tgb
+        
 
     @classmethod
     def new_name(cls):
