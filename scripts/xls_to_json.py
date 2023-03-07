@@ -132,3 +132,8 @@ for idx in df.index[1:]:
         cards.append(against_card)
 
 print(json.dumps(cards))
+
+json_string = json.dumps(cards)
+
+with open('cards_data.json', 'w') as outfile:
+    outfile.write(json_string)

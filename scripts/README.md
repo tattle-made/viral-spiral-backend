@@ -30,3 +30,5 @@ def is_valid_cell(text):
 ```
 
 checks for the presence of a fake description. It returns a boolean, which would be false if a fake description for a card does not exist and the script returns a null list if the function returns false for a given card's data in the `Fake` label. 
+
+The last block of the code saves the json data in a file named `cards_data.json`
