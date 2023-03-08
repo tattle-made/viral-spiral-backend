@@ -483,6 +483,12 @@ def connect(message=None):
 @socketio.on("disconnect")
 def test_disconnect():
     print("Client disconnected", request.sid)
+    # set player.client_id to NULL for this sid
+    player = Player.select().where(Player.client_id==request.sid).first()
+    if player is not None:
+        player.client_id = None
+        player.save()
+
 
 
 @socketio.on_error()
