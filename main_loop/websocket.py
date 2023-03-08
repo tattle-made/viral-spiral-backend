@@ -94,39 +94,18 @@ class UniqueQueue(Queue):
 
 class WebsocketGameRunner(GameRunner):
     background_tasks = {}
-    max_games = 3  # Allow maximum of 3 games to run in parallel
-    emit_queue = UniqueQueue()
+    max_games = 3 
 
     def __init__(self, *args, name: str = None, **kwargs):
         self.thread = None
         super().__init__(*args, **kwargs)
 
-    @classmethod
-    def flush_emit_queue(cls):
-        while cls.emit_queue.qsize() > 0:
-            pickled = cls.emit_queue.get()
-            obj = dict(pickle.loads(pickled))
-            obj["timestamp"] = (
-                datetime.utcnow().replace(tzinfo=timezone.utc).isoformat()
-            )
-            socketio.emit(*obj["args"], **obj["kwargs"])
-
-    @classmethod
-    def emit_async(cls, *args, **kwargs):
-        """Enqueues the message for emitting"""
-        the_dict = {"args": args, "kwargs": kwargs}
-        pickled = pickle.dumps(sorted(the_dict.items()))
-        cls.emit_queue.put(pickled)
 
     @classmethod
     def send_to_game(cls, game: Game, data=None, event="text_response"):
         json.dumps(data)  # If data isn't json dumpable, raise the error here
         logging.info(f"Emmitting to game {game.name} - event {event}")
-        cls.emit_async(
-            event,
-            {"data": data},
-            to=game.name,
-        )
+        socketio.emit(event, {"data":data}, to=game.name)
 
     @classmethod
     def send_to_player(cls, player: Player, data=None, event="text_response"):
@@ -136,7 +115,7 @@ class WebsocketGameRunner(GameRunner):
             f" {player.game.name}"
         )
         if player.client_id:
-            cls.emit_async(event, {"data": data}, to=player.client_id)
+            socketio.emit(event, {"data":data}, to=player.client_id)
 
     def invoke_player_action(self, player: Player, card_instance: CardInstance):
         self.send_to_player(
@@ -253,21 +232,6 @@ class WebsocketGameRunner(GameRunner):
         """creates a game runner object"""
         game = Game.new(**game_kwargs)
         return cls.get_by_game(game)
-
-
-def background_thread():
-    """Main Loop. Just sends an alive signal."""
-    count = 0
-    action_interval_secs = 2
-    ticker_interval_secs = 10
-    while True:
-        try:
-            socketio.sleep(0.1)
-            count += 1
-            if count % (action_interval_secs * 10) == 0:
-                WebsocketGameRunner.flush_emit_queue()
-        except Exception as exc:
-            logging.exception(exc)
 
 
 def password_auth(func):
@@ -510,10 +474,6 @@ def connect(message=None):
         f"Incoming event - {inspect.getframeinfo(inspect.currentframe()).function} |"
         f" {message}"
     )
-    global thread
-    with thread_lock:
-        if thread is None:
-            thread = socketio.start_background_task(background_thread)
     return {
         "status": 200,
         "message": "Connected",
