@@ -24,6 +24,7 @@ def draw(player: Player):
             Card.select()
                 .where(Card.game == player.game)
                 .where(Card.original_player == None)
+                .where(Card.bias_against is not None)
                 .where(Card.bias_against != player.color)
         )
 
@@ -40,15 +41,14 @@ def draw(player: Player):
                     .where(Card.game == player.game)
                     .where(Card.original_player == None)
                     .where(Card.affinity_towards is not None)
-                    .where(Card.affinity_count == 1)
                     .where(Card.fake is True) 
                 )
             if should_draw_topical:
                 card = (Card.select()
                     .where(Card.game == player.game)
                     .where(Card.original_player == None)
-                    .where(Card.affinity_towards is not None)
-                    .where(Card.bias_against is not None)
+                    .where(Card.affinity_towards is None)
+                    .where(Card.bias_against is None)
                     .where(Card.fake is True) 
                 )
         else:
@@ -58,15 +58,15 @@ def draw(player: Player):
                     .where(Card.game == player.game)
                     .where(Card.original_player == None)
                     .where(Card.affinity_towards is not None)
-                    .where(Card.affinity_count == 1)
                     .where(Card.fake is False) 
                 )
             if should_draw_topical:
                 card = (Card.select()
                     .where(Card.game == player.game)
                     .where(Card.original_player == None)
-                    .where(Card.affinity_towards is not None)
-                    .where(Card.bias_against is not False)   
+                    .where(Card.affinity_towards is None)
+                    .where(Card.bias_against is None)
+                    .where(Card.fake is False)   
                 )
     
     if not card:
