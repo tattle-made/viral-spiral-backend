@@ -1,40 +1,82 @@
-"""A deck generator function"""
+"""
+CARD drawn in a game is a function of the total global bias and some probabilities
 
-import random
+BIAS cards appear with a constant probability of 0.25 throughout the game
+For the remaining 0.75, we have two choices :
+    a. with a probability of tgb/MAX_TGB, draw a card containing FAKE AFFINITY NEWS  or FAKE TOPICAL news
+    b. with a probability of (1 - tgb/MAX_TGB), draw a card containing TRUE AFFINITY NEWS or TRUE TOPICAL news
+"""
 
-import peewee
 from exceptions import OutOfCards
 from models import Card, Player
-
+import random
+from constants import TGB_END_SCORE
 
 def draw(player: Player):
-    """Takes a player as an argument and returns a card instance from the
-    remaining cards"""
-
     tgb = player.game.total_global_bias()
 
-    # First randomly select an unplayed card
-    card = (
-        Card.select(Card.storyline)
-        .where(Card.game == player.game)
-        .where(Card.original_player == None)
-        .where(Card.tgb <= tgb)
-        .where(Card.bias_against != player.color)
-        .first()
-    )
+    bias_p = random.uniform(0,1)
 
-    # Now get lowest pending index of this card's storyline
-    card = (
-        Card.select()
-        .where(Card.game == player.game)
-        .where(Card.original_player == None)
-        .where(Card.original == None)
-        .where(Card.storyline == card.storyline)
-        .where(Card.tgb <= tgb)
-        .where(Card.bias_against != player.color)
-        .order_by(Card.storyline_index)
-        .first()
-    )
+
+    if bias_p <= 0.2:   
+        # draw a bias card
+        card = (
+            Card.select()
+                .where(Card.game == player.game)
+                .where(Card.original_player == None)
+                .where(Card.bias_against != player.color)
+                .first()
+        )
+
+    else : 
+        # draw AFFINITY or TOPICAL card
+        fake_p = random.uniform(0,1)
+        should_draw_affinity = random.uniform(0,1) < 0.5
+        should_draw_topical = not should_draw_affinity
+        
+        if fake_p < (tgb/TGB_END_SCORE):    
+            # draw FAKE card
+            if should_draw_affinity:
+                card = (Card.select()
+                    .where(Card.game == player.game)
+                    .where(Card.original_player == None)
+                    .where(Card.affinity_towards is not None)
+                    .where(Card.affinity_count == 1)
+                    .where(Card.fake is True) 
+                    .where(Card.faked_by.is_null()) 
+                    .first()
+                )
+            if should_draw_topical:
+                card = (Card.select()
+                    .where(Card.game == player.game)
+                    .where(Card.original_player == None)
+                    .where(Card.affinity_towards is not None)
+                    .where(Card.bias_against is not None)
+                    .where(Card.fake is True) 
+                    .where(Card.faked_by.is_null()) 
+                    .first()
+                )
+        else:
+            # draw TRUE card
+            if should_draw_affinity:
+                card = (Card.select()
+                    .where(Card.game == player.game)
+                    .where(Card.original_player == None)
+                    .where(Card.affinity_towards is not None)
+                    .where(Card.affinity_count == 1)
+                    .where(Card.fake is False) 
+                    .first()
+                )
+            if should_draw_topical:
+                card = (Card.select()
+                    .where(Card.game == player.game)
+                    .where(Card.original_player == None)
+                    .where(Card.affinity_towards is not None)
+                    .where(Card.bias_against is not False) 
+                    .where(Card.fake is False) 
+                    .first() 
+                )
+    
     if not card:
         raise OutOfCards(f"Game: {player.game.name}, Player: {player.name}")
     return card.draw(player)
