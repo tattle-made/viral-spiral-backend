@@ -61,6 +61,7 @@ for idx in df.index[1:]:
             {
                 "title": "",
                 "description": row.iloc[use_iloc()],
+                "fake": True
             }
         ],
         "tgb": tgb,
@@ -103,6 +104,7 @@ for idx in df.index[1:]:
                     "description": row.iloc[use_iloc()],
                     "affinity_towards": topic,
                     "affinity_count": 1,
+                    "fake": True
                 }
             ],
             "tgb": tgb,
@@ -119,6 +121,7 @@ for idx in df.index[1:]:
                     "description": row.iloc[use_iloc()],
                     "affinity_towards": topic,
                     "affinity_count": -1,
+                    "fake": True
                 }
             ],
             "tgb": tgb,
