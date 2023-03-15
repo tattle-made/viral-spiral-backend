@@ -11,7 +11,8 @@ from .base import InGameModel, Round
 from .encyclopedia import Article
 from .counters import AffinityTopic, Color
 from exceptions import NotAllowed, NotFound
-
+from functools import lru_cache
+from score import Score
 
 class PlayerInitialBias(InGameModel):
     """Stores the initial bias of a player"""
@@ -31,7 +32,8 @@ class Player(InGameModel):
     """A player in the game"""
 
     name = peewee.CharField(null=True)
-    score = peewee.IntegerField(default=0)
+    clout = peewee.IntegerField(default=0)
+    score = peewee.ForeignKeyField(Score)
     color = peewee.ForeignKeyField(Color)
     initial_bias = peewee.ForeignKeyField(
         PlayerInitialBias, backref="player", unique=True, null=True
@@ -51,31 +53,35 @@ class Player(InGameModel):
             (("name", "game"), True),
         )
 
-    def bias(self, against: Color) -> int:
-        """Returns the bias of this player against a given color"""
-        # TODO optimise
+    @lru_cache
+    def bias_cached(self, card_instances_count, against: Color):
         count = 0
         for card_instance in self.card_instances:
             # TODO use query
             if card_instance.card.bias_against == against:
                 if card_instance.status == card_instance.STATUS_PASSED:
                     count += 1
-        if self.initial_bias and self.initial_bias.against == against:
-            count += self.initial_bias.count
         return count
 
-    def affinity(self, towards: AffinityTopic) -> int:
+
+    def bias(self, against: Color) -> int:
         """Returns the bias of this player against a given color"""
-        # TODO optimise
+        return self.bias_cached(self.card_instances.count(), against)
+    
+    @lru_cache
+    def affinity_cached(self, card_instances, towards: AffinityTopic):
+        print(card_instances,towards)
         count = 0
-        for card_instance in self.card_instances:
+        for card_instance in card_instances:
             # TODO use query
             if card_instance.card.affinity_towards == towards:
                 if card_instance.status == card_instance.STATUS_PASSED:
                     count += card_instance.card.affinity_count
-        if self.initial_affinity and self.initial_affinity.towards == towards:
-            count += self.initial_affinity.count
         return count
+
+    def affinity(self, towards: AffinityTopic) -> int:
+        """Returns the bias of this player against a given color"""
+        return self.affinity_cached(card_instances=self.card_instances, towards=towards)
 
     def affinity_matches(self, with_, towards: AffinityTopic) -> bool:
         """Returns True if self's affinity matches with `with_`'s affinity"""
@@ -124,7 +130,7 @@ class Player(InGameModel):
         # deduct points
         bias_against = card_instance.card.bias_against
         if bias_against and self.bias(against=bias_against) >= 1:
-            Player.update(score=Player.score - 1).where(
+            Player.update(clout=Player.clout - 1).where(
                 Player.id_ == self.id_
             ).execute()
 
@@ -135,7 +141,7 @@ class Player(InGameModel):
             and affinity_count in (-1, 1)
             and self.affinity(towards=affinity_towards) * affinity_count >= 1
         ):
-            Player.update(score=Player.score - 1).where(
+            Player.update(clout=Player.clout - 1).where(
                 Player.id_ == self.id_
             ).execute()
 
@@ -196,7 +202,7 @@ class Player(InGameModel):
             PlayerCardQueue.dequeue(card_instance)
 
         # Increase the original player's score
-        Player.update(score=Player.score + 1).where(
+        Player.update(clout=Player.clout + 1).where(
             Player.id_ == card_instance.card.original_player_id
         ).execute()
 
@@ -204,9 +210,20 @@ class Player(InGameModel):
         # community against which this card is biased
         # This happens only for the first pass of this card
         if card_instance.card.bias_against is not None and card_instance.from_ is None:
-            Player.update(score=Player.score - 1).where(
+            Player.update(clout=Player.clout - 1).where(
                 Player.color == card_instance.card.bias_against
             )
+
+        if card_instance.card.bias_against is not None:
+            self.score.update(bias_count = Player.score.bias_count + 1).where(
+                Player.score.bias_against == card_instance.card.bias_against
+            )
+        
+        if card_instance.card.affinity_towards is not None:
+            self.score.update(affinity_count = Player.score.affinity_count + card_instance.card.affinity_count).where(
+                Player.score.affinity_towards == card_instance.card.affinity_towards
+            )
+            
 
         return {
             "passed_to": model_to_dict(to_player),
