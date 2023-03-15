@@ -27,7 +27,8 @@ def draw(player: Player):
                 .where(Card.game == player.game)
                 .where(Card.original_player == None)
                 .where(Card.bias_against != None) 
-                .where(Card.bias_against != player.color)               
+                .where(Card.bias_against != player.color)
+                .where(Card.tgb <= tgb + 2)               
                 .first()
         )
 
@@ -45,7 +46,8 @@ def draw(player: Player):
                     .where(Card.original_player == None)
                     .where(Card.affinity_towards != None)
                     .where(Card.fake == True) 
-                    .where(Card.faked_by == None) 
+                    .where(Card.faked_by == None)
+                    .where(Card.tgb <= tgb) 
                     .first()
                 )
             if should_draw_topical:
@@ -55,7 +57,8 @@ def draw(player: Player):
                     .where(Card.affinity_towards == None)
                     .where(Card.bias_against == None)
                     .where(Card.fake == True) 
-                    .where(Card.faked_by == None) 
+                    .where(Card.faked_by == None)
+                    .where(Card.tgb <= tgb) 
                     .first()
                 )
         else:
@@ -66,6 +69,7 @@ def draw(player: Player):
                     .where(Card.original_player == None)
                     .where(Card.affinity_towards != None)
                     .where(Card.fake == False) 
+                    .where(Card.tgb <= tgb)
                     .first()
                 )
             if should_draw_topical:
@@ -74,10 +78,16 @@ def draw(player: Player):
                     .where(Card.original_player == None)
                     .where(Card.affinity_towards == None)
                     .where(Card.bias_against == None) 
-                    .where(Card.fake == False) 
+                    .where(Card.fake == False)
+                    .where(Card.tgb <= tgb)
                     .first() 
                 )
     
     if not card:
-        raise OutOfCards(f"Game: {player.game.name}, Player: {player.name}")
+        card = (Card.select()
+            .where(Card.game == player.game)
+            .where(Card.original_player == None)
+            .where(Card.tgb < tgb)            
+            .first()
+        )
     return card.draw(player)
