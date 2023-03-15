@@ -55,16 +55,18 @@ def new_player(room_name, player_name):
             
                 
                 
-            driver_player_name.refresh()
-            sleep(5)
+            # driver_player_name.refresh()
+            # sleep(10)
             player_choice_button = driver_player_name.find_element("xpath",'//button[contains(text(),"{}")]'.format(player_choice))
-            player_card_text = driver_player_name.find_element("xpath",'//div[contains(@class,"card-text")]'.format(player_choice)) 
-            sleep(2)
+            player_card_text = driver_player_name.find_element("xpath",'//div[contains(@class,"card-text")]'.format(player_choice))
+            tgb = driver_player_name.find_element("xpath",'//h3[contains(text(),"Countdown to Chaos")]') 
+            sleep(3)
             
             print(str(player_name) + " sends the card to " + str(player_choice))
             print("the card text is: " + str(player_card_text.text))
+            print(str(tgb.text))
             player_choice_button.click()
-            # sleep(2)
+            sleep(5)
             
 
 
@@ -150,16 +152,18 @@ if __name__ == '__main__' :
                 
 
                     
-                driver_john.refresh()
-                sleep(5)
+                # driver_john.refresh()
+                # sleep(10)
                 
                 player_choice_button = driver_john.find_element("xpath",'//button[contains(text(),"{}")]'.format(john_choice))
-                card_text = driver_john.find_element("xpath",'//div[contains(@class,"card-text")]'.format(john_choice)) 
-                sleep(2)
+                card_text = driver_john.find_element("xpath",'//div[contains(@class,"card-text")]'.format(john_choice))
+                tgb = driver_john.find_element("xpath",'//h3[contains(text(),"Countdown to Chaos")]') 
+                sleep(3)
                 print("john sends the card to " + str(john_choice))
                 print("the card text is: " + str(card_text.text))
+                print(str(tgb.text))
                 player_choice_button.click()
-                # sleep(2)
+                sleep(5)
             except NoSuchElementException:
                 sleep(1)
                 # print("john be waiting")
@@ -168,11 +172,11 @@ if __name__ == '__main__' :
                 sleep(1)
                 # print("john be waiting")
                 continue
-        
+        sleep(15)
         p_george.join()
         p_paul.join()
         p_ringo.join()
-        sleep(5)
+        sleep(15)
         # global_bias = driver_john.find_element("xpath",'//h3[contains(text(),"Global Bias")]')
         # print("Final " + str(global_bias.text))
         print('Success! :-)')  
