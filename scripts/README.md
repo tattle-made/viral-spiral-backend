@@ -4,6 +4,12 @@ Rundowns of the scripts present in this folder
 
 ## xls_to_json
 
+### A note about running the xls_to_json file:
+
+Since the file reads an ods, you need to specify the path to the ods file as a system variable in the command to run the file itself. The example to this can be seen in the rundown below. Secondly the file would output the `cards.json` file in the same folder. Based on how the directory is structured, you will need to move this file to the `config_jsons/example1/` folder and replace the card.json there with the new data. This is recommeded since the data might be stale when a new card drawing logic is pushed
+
+### Rundown:
+
 Converts a given excel sheet into a JSON dump in a particular format which can then be used to populate the database.
 The following line of code read the data and stores it into the `df` variable:
 ```
