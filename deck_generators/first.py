@@ -7,6 +7,8 @@ For the remaining 0.75, we have two choices :
     b. with a probability of (1 - tgb/MAX_TGB), draw a card containing TRUE AFFINITY NEWS or TRUE TOPICAL news
 """
 
+
+
 from exceptions import OutOfCards
 from models import Card, Player
 import random
@@ -24,7 +26,7 @@ def draw(player: Player):
             Card.select()
                 .where(Card.game == player.game)
                 .where(Card.original_player == None)
-                .where(Card.bias_against is not None) 
+                .where(Card.bias_against != None) 
                 .where(Card.bias_against != player.color)               
                 .first()
         )
@@ -41,19 +43,19 @@ def draw(player: Player):
                 card = (Card.select()
                     .where(Card.game == player.game)
                     .where(Card.original_player == None)
-                    .where(Card.affinity_towards is not None)
-                    .where(Card.fake is True) 
-                    .where(Card.faked_by.is_null()) 
+                    .where(Card.affinity_towards != None)
+                    .where(Card.fake == True) 
+                    .where(Card.faked_by == None) 
                     .first()
                 )
             if should_draw_topical:
                 card = (Card.select()
                     .where(Card.game == player.game)
                     .where(Card.original_player == None)
-                    .where(Card.affinity_towards is None)
-                    .where(Card.bias_against is None)
-                    .where(Card.fake is True) 
-                    .where(Card.faked_by.is_null()) 
+                    .where(Card.affinity_towards == None)
+                    .where(Card.bias_against == None)
+                    .where(Card.fake == True) 
+                    .where(Card.faked_by == None) 
                     .first()
                 )
         else:
@@ -62,17 +64,17 @@ def draw(player: Player):
                 card = (Card.select()
                     .where(Card.game == player.game)
                     .where(Card.original_player == None)
-                    .where(Card.affinity_towards is not None)
-                    .where(Card.fake is False) 
+                    .where(Card.affinity_towards != None)
+                    .where(Card.fake == False) 
                     .first()
                 )
             if should_draw_topical:
                 card = (Card.select()
                     .where(Card.game == player.game)
                     .where(Card.original_player == None)
-                    .where(Card.affinity_towards is None)
-                    .where(Card.bias_against is None) 
-                    .where(Card.fake is False) 
+                    .where(Card.affinity_towards == None)
+                    .where(Card.bias_against == None) 
+                    .where(Card.fake == False) 
                     .first() 
                 )
     

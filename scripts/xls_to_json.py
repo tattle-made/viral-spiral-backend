@@ -138,5 +138,5 @@ print(json.dumps(cards))
 
 json_string = json.dumps(cards)
 
-with open('cards_data.json', 'w') as outfile:
+with open('cards.json', 'w') as outfile:
     outfile.write(json_string)
