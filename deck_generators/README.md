@@ -48,6 +48,4 @@ The `output.txt` file should then have an a sequence of the cards, ending at tot
 
 By default this script divides the cards into bias cards and non bias cards. Bias cards are the ones which have a bias against a community of particular colored shirts. Non bias cards are the remaining. With a given probability it (currently 20%) it presents bias cards. Moreover whenever a non-bias card is displayed, the probability of the information on it being fake is: `tgb`/15. The script assumes that all the cards are passed atleast once and thus whenever a bias card or a fake information card appears the value of `tgb` goes up by 1. 
 
-## Second
-
-`second.py` is the proof of concept of deck generator alpha and serves as a scaffolding for the creation of `first.py` and this file essenatially combines the logic in `deck-generator-alpha.py` with the ORM related logic required to read from the database. 
+ 
