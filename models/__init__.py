@@ -6,6 +6,7 @@ from .counters import AffinityTopic, Color
 from .powers import PlayerPower, CancelStatus, CancelVote
 from .card_queue import PlayerCardQueue
 from .encyclopedia import Article
+from .score import Score
 
 ALL_MODELS = [
     # This is the order in which the tables will be created
@@ -17,6 +18,7 @@ ALL_MODELS = [
     PlayerInitialBias,
     PlayerInitialAffinity,
     Player,
+    Score,
     PlayerPower,
     CancelStatus,
     CancelVote,
