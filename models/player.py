@@ -499,7 +499,7 @@ class Score(InGameModel):
     # need to be treated accordingly. Possible values are clout, affinity or bias.
     # I would have preferred to use an enum but peewee implementation for Enum seemed non trivial
     type = peewee.FixedCharField(max_length=10)
-    target = peewee.UUIDField(null=True)
+    target = peewee.CharField(max_length=50, null=True)
     value = peewee.IntegerField()
 
     @classmethod
@@ -562,9 +562,9 @@ class Score(InGameModel):
             if score.type == ScoreType.CLOUT.value:
                 all_scores["score"] = score.value
             elif score.type == ScoreType.BIAS.value:
-                all_scores["biases"][str(score.target)] = score.value
+                all_scores["biases"][score.target] = score.value
             elif score.type == ScoreType.AFFINITY.value:
-                all_scores["affinities"][str(score.target)] = score.value
+                all_scores["affinities"][score.target] = score.value
         return all_scores
 
     @classmethod
@@ -572,7 +572,7 @@ class Score(InGameModel):
         all_biases = {}
         for score in scores:
             if score.type == ScoreType.BIAS.value:
-                all_biases[str(score.target)] = score.value
+                all_biases[score.target] = score.value
         return all_biases
 
     @classmethod
@@ -580,7 +580,7 @@ class Score(InGameModel):
         all_affinities = {}
         for score in scores:
             if score.type == ScoreType.AFFINITY.value:
-                all_affinities[str(score.target)] = score.value
+                all_affinities[score.target] = score.value
         return all_affinities
 
     @classmethod
