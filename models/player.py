@@ -60,7 +60,6 @@ class Player(InGameModel):
 
     def bias(self, against: Color) -> int:
         """Returns the bias of this player against a given color"""
-        print(self.id_, against.id_)
         return Score.bias(self.score_set, against)
 
     def affinity(self, towards: AffinityTopic) -> int:
@@ -196,6 +195,15 @@ class Player(InGameModel):
             for player in self.game.player_set:
                 if player.color == card_instance.card.bias_against:
                     Score.inc_clout(player, -1)
+
+        card_bias = card_instance.card.bias_against
+        if card_bias is not None:
+            Score.inc_bias(self, card_bias, 1)
+
+        card_affinity = card_instance.card.affinity_towards
+        card_affinity_count = card_instance.card.affinity_count
+        if card_affinity is not None:
+            Score.inc_affinity(self, card_affinity, card_affinity_count)
 
         card_bias = card_instance.card.bias_against
         if card_bias is not None:
