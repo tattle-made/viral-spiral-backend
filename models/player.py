@@ -187,7 +187,7 @@ class Player(InGameModel):
             PlayerCardQueue.dequeue(card_instance)
 
         # Increase the original player's score
-        Score.inc_clout(player, 1)
+        Score.inc_clout(self, 1)
 
         # If this is a biased card, decrease the score of all players of the
         # community against which this card is biased

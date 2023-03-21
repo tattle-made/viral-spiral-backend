@@ -300,6 +300,7 @@ class Game(Model):
             dict_ = model_to_dict(player)
             dict_["affinities"] = player.all_affinities()
             dict_["biases"] = player.all_biases()
+            dict_["score"] = player.clout()
             players.append(dict_)
 
         return {
