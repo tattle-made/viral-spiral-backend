@@ -541,8 +541,10 @@ class Score(InGameModel):
 
     @classmethod
     def inc_clout(cls, player: Player, inc: int):
+        clout = Score.clout(player.score_set)
+        new_clout = 0 if clout + inc < 0 else clout + inc
         (
-            Score.update({Score.value: Score.value + inc})
+            Score.update({Score.value: Score.value + new_clout})
             .where(Score.game == player.game)
             .where(Score.player == player)
             .where(Score.type == ScoreType.CLOUT.value)
