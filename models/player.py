@@ -60,6 +60,7 @@ class Player(InGameModel):
 
     def bias(self, against: Color) -> int:
         """Returns the bias of this player against a given color"""
+        print(self.id_, against.id_)
         return Score.bias(self.score_set, against)
 
     def affinity(self, towards: AffinityTopic) -> int:
@@ -186,17 +187,15 @@ class Player(InGameModel):
             PlayerCardQueue.dequeue(card_instance)
 
         # Increase the original player's score
-        Player.update(clout=Player.clout + 1).where(
-            Player.id_ == card_instance.card.original_player_id
-        ).execute()
+        Score.inc_clout(player, 1)
 
         # If this is a biased card, decrease the score of all players of the
         # community against which this card is biased
         # This happens only for the first pass of this card
         if card_instance.card.bias_against is not None and card_instance.from_ is None:
-            Player.update(clout=Player.clout - 1).where(
-                Player.color == card_instance.card.bias_against
-            )
+            for player in self.game.player_set:
+                if player.color == card_instance.card.bias_against:
+                    Score.inc_clout(player, -1)
 
         card_bias = card_instance.card.bias_against
         if card_bias is not None:
@@ -499,7 +498,7 @@ class Score(InGameModel):
     # need to be treated accordingly. Possible values are clout, affinity or bias.
     # I would have preferred to use an enum but peewee implementation for Enum seemed non trivial
     type = peewee.FixedCharField(max_length=10)
-    target = peewee.CharField(max_length=50, null=True)
+    target = peewee.CharField(max_length=32, null=True)
     value = peewee.IntegerField()
 
     @classmethod
@@ -588,14 +587,14 @@ class Score(InGameModel):
         for score in scores:
             if score.type == ScoreType.BIAS.value and score.target == color.id_:
                 return score.value
-        raise Exception("Uninitialized Bias for Player")
+        return 0
 
     @classmethod
     def affinity(cls, scores: peewee.ModelSelect, affinity: AffinityTopic):
         for score in scores:
             if score.type == ScoreType.AFFINITY.value and score.target == affinity.id_:
                 return score.value
-        raise Exception("Uninitialized Affinity for Player")
+        return 0
 
     @classmethod
     def clout(cls, scores: peewee.ModelSelect):
