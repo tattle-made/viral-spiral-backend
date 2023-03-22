@@ -111,11 +111,12 @@ class WebsocketGameRunner(GameRunner):
     @classmethod
     def send_to_player(cls, player: Player, data=None, event="text_response"):
         json.dumps(data)  # If data isn't json dumpable, raise the error here
-        logging.info(
-            f"Emmitting to player {player.name} - event {event} | game"
-            f" {player.game.name}"
-        )
+
         if player.client_id:
+            logging.info(
+                f"Emmitting to player {player.name} - event {event} | game"
+                f" {player.game.name}"
+            )
             socketio.emit(event, {"data": data}, to=player.client_id)
 
     def invoke_player_action(self, player: Player, card_instance: CardInstance):

@@ -193,7 +193,7 @@ class Player(InGameModel):
         # This happens only for the first pass of this card
         if card_instance.card.bias_against is not None and card_instance.from_ is None:
             for player in self.game.player_set:
-                if player.color == card_instance.card.bias_against:
+                if player.color == card_instance.card.bias_against and player != self:
                     Score.inc_clout(player, -1)
 
         card_bias = card_instance.card.bias_against
