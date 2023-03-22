@@ -118,7 +118,7 @@ class Game(Model):
         # TODO implement this
         # TODO add timeout
         for player in self.player_set:
-            if player.score >= PLAYER_WIN_SCORE:
+            if player.clout() >= PLAYER_WIN_SCORE:
                 return False
 
         if self.total_global_bias() >= TGB_END_SCORE:
@@ -165,13 +165,13 @@ class Game(Model):
         """Total global bias of the game"""
         # Sum of all bias points
         from models import Player
+
         tgb = 0
         for player in self.player_set:
             for bias in player.all_biases().values():
-                tgb+=bias
+                tgb += bias
 
         return tgb
-        
 
     @classmethod
     def new_name(cls):
@@ -237,7 +237,6 @@ class Game(Model):
         Article.import_from_json(
             json_path=encyclopedia_filepath, defaults={"game_id": str(game.id_)}
         )
-        
 
         return game
 
@@ -293,6 +292,7 @@ class Game(Model):
     def about(self):
         """Returns a dictionary about this game"""
         from .player import Player
+
         current_player = self.player_set.where(Player.current == True).first()
 
         players = []
@@ -300,6 +300,7 @@ class Game(Model):
             dict_ = model_to_dict(player)
             dict_["affinities"] = player.all_affinities()
             dict_["biases"] = player.all_biases()
+            dict_["score"] = player.clout()
             players.append(dict_)
 
         return {

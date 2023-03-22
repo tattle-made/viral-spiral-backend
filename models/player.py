@@ -7,10 +7,18 @@ from constants import (
     SOCKET_EVENT_ENC_SEARCH_RESULT,
 )
 from .utils import model_to_dict
-from .base import InGameModel, Round
+from .base import InGameModel, Round, Game
 from .encyclopedia import Article
 from .counters import AffinityTopic, Color
 from exceptions import NotAllowed, NotFound
+from functools import lru_cache
+from enum import Enum
+
+
+class ScoreType(Enum):
+    CLOUT = "clout"
+    AFFINITY = "affinity"
+    BIAS = "bias"
 
 
 class PlayerInitialBias(InGameModel):
@@ -31,7 +39,6 @@ class Player(InGameModel):
     """A player in the game"""
 
     name = peewee.CharField(null=True)
-    score = peewee.IntegerField(default=0)
     color = peewee.ForeignKeyField(Color)
     initial_bias = peewee.ForeignKeyField(
         PlayerInitialBias, backref="player", unique=True, null=True
@@ -53,29 +60,11 @@ class Player(InGameModel):
 
     def bias(self, against: Color) -> int:
         """Returns the bias of this player against a given color"""
-        # TODO optimise
-        count = 0
-        for card_instance in self.card_instances:
-            # TODO use query
-            if card_instance.card.bias_against == against:
-                if card_instance.status == card_instance.STATUS_PASSED:
-                    count += 1
-        if self.initial_bias and self.initial_bias.against == against:
-            count += self.initial_bias.count
-        return count
+        return Score.bias(self.score_set, against)
 
     def affinity(self, towards: AffinityTopic) -> int:
         """Returns the bias of this player against a given color"""
-        # TODO optimise
-        count = 0
-        for card_instance in self.card_instances:
-            # TODO use query
-            if card_instance.card.affinity_towards == towards:
-                if card_instance.status == card_instance.STATUS_PASSED:
-                    count += card_instance.card.affinity_count
-        if self.initial_affinity and self.initial_affinity.towards == towards:
-            count += self.initial_affinity.count
-        return count
+        return Score.affinity(self.score_set, towards)
 
     def affinity_matches(self, with_, towards: AffinityTopic) -> bool:
         """Returns True if self's affinity matches with `with_`'s affinity"""
@@ -86,12 +75,10 @@ class Player(InGameModel):
         return self.bias(against=against) * with_.bias(against=against) >= 1
 
     def all_affinities(self):
-        return dict(
-            [(topic.id_, self.affinity(topic)) for topic in self.game.affinitytopic_set]
-        )
+        return Score.all_affinities(self.score_set)
 
     def all_biases(self):
-        return dict([(color.id_, self.bias(color)) for color in self.game.color_set])
+        return Score.all_biases(self.score_set)
 
     def card_instances_in_hand(self):
         """Retuns all card instances which the player is holding"""
@@ -104,6 +91,9 @@ class Player(InGameModel):
         from .card_queue import PlayerCardQueue
 
         PlayerCardQueue.queue(card_instance)
+
+    def clout(self):
+        return Score.clout(self.score_set)
 
     def action_keep_card(self, card_instance_id: str, discard=False):
         """Remove this card from the queue"""
@@ -124,7 +114,7 @@ class Player(InGameModel):
         # deduct points
         bias_against = card_instance.card.bias_against
         if bias_against and self.bias(against=bias_against) >= 1:
-            Player.update(score=Player.score - 1).where(
+            Player.update(clout=Player.clout - 1).where(
                 Player.id_ == self.id_
             ).execute()
 
@@ -135,7 +125,7 @@ class Player(InGameModel):
             and affinity_count in (-1, 1)
             and self.affinity(towards=affinity_towards) * affinity_count >= 1
         ):
-            Player.update(score=Player.score - 1).where(
+            Player.update(clout=Player.clout - 1).where(
                 Player.id_ == self.id_
             ).execute()
 
@@ -196,17 +186,33 @@ class Player(InGameModel):
             PlayerCardQueue.dequeue(card_instance)
 
         # Increase the original player's score
-        Player.update(score=Player.score + 1).where(
-            Player.id_ == card_instance.card.original_player_id
-        ).execute()
+        Score.inc_clout(self, 1)
 
         # If this is a biased card, decrease the score of all players of the
         # community against which this card is biased
         # This happens only for the first pass of this card
         if card_instance.card.bias_against is not None and card_instance.from_ is None:
-            Player.update(score=Player.score - 1).where(
-                Player.color == card_instance.card.bias_against
-            )
+            for player in self.game.player_set:
+                if player.color == card_instance.card.bias_against:
+                    Score.inc_clout(player, -1)
+
+        card_bias = card_instance.card.bias_against
+        if card_bias is not None:
+            Score.inc_bias(self, card_bias, 1)
+
+        card_affinity = card_instance.card.affinity_towards
+        card_affinity_count = card_instance.card.affinity_count
+        if card_affinity is not None:
+            Score.inc_affinity(self, card_affinity, card_affinity_count)
+
+        card_bias = card_instance.card.bias_against
+        if card_bias is not None:
+            Score.inc_bias(self, card_bias, 1)
+
+        card_affinity = card_instance.card.affinity_towards
+        card_affinity_count = card_instance.card.affinity_count
+        if card_affinity is not None:
+            Score.inc_affinity(self, card_affinity, card_affinity_count)
 
         return {
             "passed_to": model_to_dict(to_player),
@@ -478,3 +484,131 @@ class Player(InGameModel):
                 has_fake_news = True
                 break
         PlayerPower.update(name=FAKE_NEWS, player=self, active=has_fake_news)
+
+
+"""
+Keeps all game related scores in one table.
+includes player's affinities, biases and clout.
+
+Each row represents a type of score for a player in a game -
+the player's clout, or their affinity towards a topic or their bias against a color
+
+The table's schema was chosen keeping in mind that the affinity and bias count 
+might change, so we've adopted this instead of a table with large but fixed columns.
+
+"""
+
+
+class Score(InGameModel):
+    player = peewee.ForeignKeyField(Player, null=True)
+
+    # Tells you which type of score this is. The subsequent fields `target` and `value`
+    # need to be treated accordingly. Possible values are clout, affinity or bias.
+    # I would have preferred to use an enum but peewee implementation for Enum seemed non trivial
+    type = peewee.FixedCharField(max_length=10)
+    target = peewee.CharField(max_length=32, null=True)
+    value = peewee.IntegerField()
+
+    @classmethod
+    def initialize(cls, game: Game, player: Player):
+        Score.create(game=game, player=player, type=ScoreType.CLOUT.value)
+        for affinity in game.affinitytopic_set:
+            Score.create(
+                game=game,
+                player=player,
+                type=ScoreType.AFFINITY.value,
+                target=affinity.id_,
+            )
+        for bias in game.color_set:
+            if bias != player.color:
+                Score.create(
+                    game=game, player=player, type=ScoreType.BIAS.value, target=bias.id_
+                )
+
+    @classmethod
+    def inc_bias(cls, player: Player, color: Color, inc: int):
+        (
+            Score.update({Score.value: Score.value + inc})
+            .where(Score.game == player.game)
+            .where(Score.player == player)
+            .where(Score.target == color.id_)
+            .where(Score.type == ScoreType.BIAS.value)
+            .execute()
+        )
+
+    @classmethod
+    def inc_affinity(cls, player: Player, affinity: AffinityTopic, inc: int):
+        (
+            Score.update({Score.value: Score.value + inc})
+            .where(Score.game == player.game)
+            .where(Score.player == player)
+            .where(Score.target == affinity.id_)
+            .where(Score.type == ScoreType.AFFINITY.value)
+            .execute()
+        )
+
+    @classmethod
+    def inc_clout(cls, player: Player, inc: int):
+        clout = Score.clout(player.score_set)
+        new_clout = 0 if clout + inc < 0 else clout + inc
+        (
+            Score.update({Score.value: Score.value + new_clout})
+            .where(Score.game == player.game)
+            .where(Score.player == player)
+            .where(Score.type == ScoreType.CLOUT.value)
+            .execute()
+        )
+
+    """
+        A helper method to format scores in a way thats backwards compatible
+        with what the client expects 
+    """
+
+    @classmethod
+    def all_scores_for_client(cls, scores: peewee.ModelSelect):
+        all_scores = {"score": 0, "biases": {}, "affinities": {}}
+        for score in scores:
+            if score.type == ScoreType.CLOUT.value:
+                all_scores["score"] = score.value
+            elif score.type == ScoreType.BIAS.value:
+                all_scores["biases"][score.target] = score.value
+            elif score.type == ScoreType.AFFINITY.value:
+                all_scores["affinities"][score.target] = score.value
+        return all_scores
+
+    @classmethod
+    def all_biases(cls, scores: peewee.ModelSelect):
+        all_biases = {}
+        for score in scores:
+            if score.type == ScoreType.BIAS.value:
+                all_biases[score.target] = score.value
+        return all_biases
+
+    @classmethod
+    def all_affinities(cls, scores: peewee.ModelSelect):
+        all_affinities = {}
+        for score in scores:
+            if score.type == ScoreType.AFFINITY.value:
+                all_affinities[score.target] = score.value
+        return all_affinities
+
+    @classmethod
+    def bias(cls, scores: peewee.ModelSelect, color: Color):
+        for score in scores:
+            if score.type == ScoreType.BIAS.value and score.target == color.id_:
+                return score.value
+        return 0
+
+    @classmethod
+    def affinity(cls, scores: peewee.ModelSelect, affinity: AffinityTopic):
+        for score in scores:
+            if score.type == ScoreType.AFFINITY.value and score.target == affinity.id_:
+                return score.value
+        return 0
+
+    @classmethod
+    def clout(cls, scores: peewee.ModelSelect):
+        for score in scores:
+            if score.type == ScoreType.CLOUT.value:
+                return score.value
+        return 0

@@ -21,6 +21,7 @@ from flask_socketio import (
 from models.utils import model_to_dict
 import cProfile
 import sys
+from models import Score
 
 from constants import GAME_CREATION_TOTAL_TRIES
 from models import Game, Player, Card, CardInstance, CancelVote, FullRound
@@ -30,6 +31,7 @@ from models.messages import (
 )
 
 from main_loop.base import GameRunner
+
 root_logger = logging.getLogger("root")
 
 # Set this variable to "threading", "eventlet" or "gevent" to test the
@@ -94,18 +96,17 @@ class UniqueQueue(Queue):
 
 class WebsocketGameRunner(GameRunner):
     background_tasks = {}
-    max_games = 3 
+    max_games = 3
 
     def __init__(self, *args, name: str = None, **kwargs):
         self.thread = None
         super().__init__(*args, **kwargs)
 
-
     @classmethod
     def send_to_game(cls, game: Game, data=None, event="text_response"):
         json.dumps(data)  # If data isn't json dumpable, raise the error here
         logging.info(f"Emmitting to game {game.name} - event {event}")
-        socketio.emit(event, {"data":data}, to=game.name)
+        socketio.emit(event, {"data": data}, to=game.name)
 
     @classmethod
     def send_to_player(cls, player: Player, data=None, event="text_response"):
@@ -115,7 +116,7 @@ class WebsocketGameRunner(GameRunner):
             f" {player.game.name}"
         )
         if player.client_id:
-            socketio.emit(event, {"data":data}, to=player.client_id)
+            socketio.emit(event, {"data": data}, to=player.client_id)
 
     def invoke_player_action(self, player: Player, card_instance: CardInstance):
         self.send_to_player(
@@ -255,6 +256,7 @@ def index():
     """Renders the main page of the game"""
     return render_template("index.html", async_mode=socketio.async_mode)
 
+
 @app.route("/health")
 def health_check():
     """Returns an OK"""
@@ -298,6 +300,7 @@ def join_game(message):
             if not player:
                 return {"status": 403, "error": "No more players allowed"}
             player.name = player_name.strip().lower()
+            Score.initialize(runner.game, player)
             player.save()
 
         if player.client_id == request.sid:
@@ -467,7 +470,7 @@ def my_echo(message):
     message["echo"] = True
     emit("text_response", message)
 
-  
+
 @socketio.event
 def connect(message=None):
     logging.info(
@@ -484,11 +487,10 @@ def connect(message=None):
 def test_disconnect():
     print("Client disconnected", request.sid)
     # set player.client_id to NULL for this sid
-    player = Player.select().where(Player.client_id==request.sid).first()
+    player = Player.select().where(Player.client_id == request.sid).first()
     if player is not None:
         player.client_id = None
         player.save()
-
 
 
 @socketio.on_error()
