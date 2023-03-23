@@ -205,15 +205,6 @@ class Player(InGameModel):
         if card_affinity is not None:
             Score.inc_affinity(self, card_affinity, card_affinity_count)
 
-        card_bias = card_instance.card.bias_against
-        if card_bias is not None:
-            Score.inc_bias(self, card_bias, 1)
-
-        card_affinity = card_instance.card.affinity_towards
-        card_affinity_count = card_instance.card.affinity_count
-        if card_affinity is not None:
-            Score.inc_affinity(self, card_affinity, card_affinity_count)
-
         return {
             "passed_to": model_to_dict(to_player),
         }
