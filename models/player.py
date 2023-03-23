@@ -114,9 +114,8 @@ class Player(InGameModel):
         # deduct points
         bias_against = card_instance.card.bias_against
         if bias_against and self.bias(against=bias_against) >= 1:
-            Player.update(clout=Player.clout - 1).where(
-                Player.id_ == self.id_
-            ).execute()
+            original_player = Player.select().where(Player.id_ == self.id_).first()
+            Score.inc_clout(original_player, -1)
 
         affinity_towards = card_instance.card.affinity_towards
         affinity_count = card_instance.card.affinity_count
@@ -125,9 +124,8 @@ class Player(InGameModel):
             and affinity_count in (-1, 1)
             and self.affinity(towards=affinity_towards) * affinity_count >= 1
         ):
-            Player.update(clout=Player.clout - 1).where(
-                Player.id_ == self.id_
-            ).execute()
+            original_player = Player.select().where(Player.id_ == self.id_).first()
+            Score.inc_clout(original_player, -1)
 
         return model_to_dict(card_instance)
 
