@@ -8,6 +8,12 @@ import sys
 import json
 from pandas_ods_reader import read_ods
 from numpy import isnan
+import gdown
+import openpyxl
+import uuid
+
+wb = openpyxl.load_workbook('Viral Spiral v2.xlsx')
+ws = wb['Cards Master']
 
 
 class Color:
@@ -24,7 +30,7 @@ class Topic:
     HOUSEBOATS = "houseboats"
 
 
-ods_path = sys.argv[1]
+ods_path = r"C:\Work\playground\vs-e2e\Viral Spiral v2.ods"
 sheet_name = "Cards Master"
 df = read_ods(ods_path, sheet_name)
 
@@ -36,6 +42,25 @@ tgb = None
 
 def is_valid_cell(text):
     return text and text.strip() and text.strip() != "null"
+
+def image_token_creator(r, c, sheet):
+    # print("(" + str(r) + "," + str(c) + ")")
+    try: 
+        url = sheet.cell(row=r, column=c).hyperlink.target
+        # url = url.replace("open", "uc")
+        # print(url)
+        file_id = url.split('=')[1]
+        file_id = file_id[:-4]
+        prefix = 'https://drive.google.com/uc?/export=download&confirm=pbef&id='
+        image_id = uuid.uuid4()
+        output = str(image_id) + '.jpg'
+        image_folder_path = 'images/'
+        gdown.download(prefix+file_id, image_folder_path+output, quiet=True)
+        return str(output)
+    except AttributeError:
+        # print("No download!")
+        return None
+
 
 
 for idx in df.index[1:]:
@@ -65,7 +90,7 @@ for idx in df.index[1:]:
             }
         ],
         "tgb": tgb,
-        "image": row.iloc[use_iloc()],
+        "image": image_token_creator(idx+2, use_iloc()+1, ws)
     }
     if not is_valid_cell(factual_card["fakes"][0]["description"]):
         factual_card["fakes"] = []
@@ -79,7 +104,7 @@ for idx in df.index[1:]:
             "bias_against": color,
             "fakes": [],
             "tgb": tgb,
-            "image": row.iloc[use_iloc()],
+            "image": image_token_creator(idx+2, use_iloc()+1, ws)
         }
         # if not is_valid_cell(bias_card["fakes"][0]["description"]):
         #     bias_card["fakes"] = []
@@ -108,7 +133,7 @@ for idx in df.index[1:]:
                 }
             ],
             "tgb": tgb,
-            "image": row.iloc[use_iloc()],
+            "image": image_token_creator(idx+2, use_iloc()+1, ws),
         }
         against_card = {
             "title": "",
@@ -125,7 +150,7 @@ for idx in df.index[1:]:
                 }
             ],
             "tgb": tgb,
-            "image": row.iloc[use_iloc()],
+            "image": image_token_creator(idx+2, use_iloc()+1, ws),
         }
         if not is_valid_cell(pro_card["fakes"][0]["description"]):
             pro_card["fakes"] = []
