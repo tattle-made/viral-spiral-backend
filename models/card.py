@@ -65,6 +65,8 @@ class Card(InGameModel):
         Article, null=True, unique=False, backref="cards"
     )
 
+    image = peewee.FixedCharField(default="", max_length=50) # image url
+
     def to_dict(self, **kwargs):
         """Calls peewee's model_to_dict and passes kwargs to it"""
         dict_ = mtd_original(self, **kwargs)
