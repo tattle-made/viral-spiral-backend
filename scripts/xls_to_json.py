@@ -30,7 +30,7 @@ class Topic:
     HOUSEBOATS = "houseboats"
 
 
-ods_path = r"C:\Work\playground\vs-e2e\Viral Spiral v2.ods"
+ods_path = sys.argv[1]
 sheet_name = "Cards Master"
 df = read_ods(ods_path, sheet_name)
 
@@ -56,10 +56,10 @@ def image_token_creator(r, c, sheet):
         output = str(image_id) + '.jpg'
         image_folder_path = 'images/'
         gdown.download(prefix+file_id, image_folder_path+output, quiet=True)
-        return str(output)
+        return str(image_id)
     except AttributeError:
         # print("No download!")
-        return None
+        return ""
 
 
 
@@ -79,18 +79,23 @@ for idx in df.index[1:]:
         tgb = new_tgb
 
     # Factual card
+
+    description_true = row.iloc[use_iloc()]
+    description_fake = row.iloc[use_iloc()]
+    image_url = image_token_creator(idx+2, use_iloc()+1, ws)
     factual_card = {
         "title": "",
-        "description": row.iloc[use_iloc()],
+        "description": description_true,
         "fakes": [
             {
                 "title": "",
-                "description": row.iloc[use_iloc()],
-                "fake": True
+                "description": description_fake,
+                "fake": True,
+                "image": image_url
             }
         ],
         "tgb": tgb,
-        "image": image_token_creator(idx+2, use_iloc()+1, ws)
+        "image": image_url,
     }
     if not is_valid_cell(factual_card["fakes"][0]["description"]):
         factual_card["fakes"] = []
@@ -104,7 +109,7 @@ for idx in df.index[1:]:
             "bias_against": color,
             "fakes": [],
             "tgb": tgb,
-            "image": image_token_creator(idx+2, use_iloc()+1, ws)
+            "image": image_token_creator(idx+2, use_iloc()+1, ws),
         }
         # if not is_valid_cell(bias_card["fakes"][0]["description"]):
         #     bias_card["fakes"] = []
@@ -118,39 +123,55 @@ for idx in df.index[1:]:
         Topic.HIGH_FIVES,
         Topic.HOUSEBOATS,
     ):
+        
+        # pro card
+        description_true = row.iloc[use_iloc()]
+        description_fake = row.iloc[use_iloc()]
+        image_url = image_token_creator(idx+2, use_iloc()+1, ws)
+
+
         pro_card = {
             "title": "",
-            "description": row.iloc[use_iloc()],
+            "description": description_true,
             "affinity_towards": topic,
             "affinity_count": 1,
             "fakes": [
                 {
                     "title": "",
-                    "description": row.iloc[use_iloc()],
+                    "description": description_fake,
                     "affinity_towards": topic,
                     "affinity_count": 1,
-                    "fake": True
+                    "fake": True,
+                    "image": image_url
                 }
             ],
             "tgb": tgb,
-            "image": image_token_creator(idx+2, use_iloc()+1, ws),
+            "image": image_url,
         }
+
+        # against card
+        description_true = row.iloc[use_iloc()]
+        description_fake = row.iloc[use_iloc()]
+        image_url = image_token_creator(idx+2, use_iloc()+1, ws)
+
+
         against_card = {
             "title": "",
-            "description": row.iloc[use_iloc()],
+            "description": description_true,
             "affinity_towards": topic,
             "affinity_count": -1,
             "fakes": [
                 {
                     "title": "",
-                    "description": row.iloc[use_iloc()],
+                    "description": description_fake,
                     "affinity_towards": topic,
                     "affinity_count": -1,
-                    "fake": True
+                    "fake": True,
+                    "image": image_url
                 }
             ],
             "tgb": tgb,
-            "image": image_token_creator(idx+2, use_iloc()+1, ws),
+            "image": image_url,
         }
         if not is_valid_cell(pro_card["fakes"][0]["description"]):
             pro_card["fakes"] = []
