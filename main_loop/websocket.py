@@ -330,8 +330,6 @@ def join_game(message):
 @socketio.event
 def create_game(message):
     """Creates a game"""
-    from time import sleep
-
     logging.info(
         f"Incoming event - {inspect.getframeinfo(inspect.currentframe()).function} |"
         f" {message}"
