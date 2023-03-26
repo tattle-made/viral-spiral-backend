@@ -206,6 +206,7 @@ class Game(Model):
         from .counters import Color, AffinityTopic
         from .card import Card
         from .encyclopedia import Article
+        from time import sleep
 
         encyclopedia_filepath = "config_jsons/example1/articles.json"
 
@@ -213,7 +214,7 @@ class Game(Model):
 
         # TODO create initial biases
         game = cls.create(name=name, **model_kwargs)
-
+        yield {"type": "message", "payload": "Game Initialized"}
         color_objs = []
         for color_name in json.load(open(colors_filepath)):
             color_objs.append(Color.create(name=color_name, game=game))
@@ -230,15 +231,20 @@ class Game(Model):
             color = color_objs[0]
             color_objs = color_objs[1:] + [color_objs[0]]
             player = Player.create(color=color, game=game, sequence=sequences[idx])
+        yield {"type": "message", "payload": "Players, Bias, Affinities Initialized"}
 
         Card.import_from_json(
             json_path=cards_filepath, defaults={"game_id": str(game.id_)}
         )
+        yield {"type": "message", "payload": "Cards Initialized"}
+
         Article.import_from_json(
             json_path=encyclopedia_filepath, defaults={"game_id": str(game.id_)}
         )
+        yield {"type": "message", "payload": "Encyclopedia Initialized"}
+        yield {"type": "message", "payload": "Joining Game"}
 
-        return game
+        yield {"type": "result", "payload": game}
 
     def get_player_by_name(self, player_name: str):
         """Returns a player who has joined the game earlier"""

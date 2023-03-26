@@ -1,3 +1,6 @@
+import eventlet
+
+eventlet.monkey_patch()
 import logging
 import inspect
 import json
@@ -12,6 +15,7 @@ from flask import Flask, render_template, session, request, copy_current_request
 from flask_socketio import (
     SocketIO,
     emit,
+    send,
     join_room,
     leave_room,
     close_room,
@@ -232,8 +236,14 @@ class WebsocketGameRunner(GameRunner):
     @classmethod
     def create(cls, **game_kwargs):
         """creates a game runner object"""
-        game = Game.new(**game_kwargs)
-        return cls.get_by_game(game)
+        for progress in Game.new(**game_kwargs):
+            if progress["type"] == "message":
+                yield progress
+            if progress["type"] == "result":
+                yield {
+                    "type": "result",
+                    "payload": cls.get_by_game(progress["payload"]),
+                }
 
 
 def password_auth(func):
@@ -320,10 +330,15 @@ def join_game(message):
 @socketio.event
 def create_game(message):
     """Creates a game"""
+    from time import sleep
+
     logging.info(
         f"Incoming event - {inspect.getframeinfo(inspect.currentframe()).function} |"
         f" {message}"
     )
+
+    emit("create_room:progress", "Creating Room")
+
     player_count = int(message["player_count"])
     colors_filepath = message["colors_filepath"]
     topics_filepath = message["topics_filepath"]
@@ -332,31 +347,28 @@ def create_game(message):
     cards_filepath = message["cards_filepath"]
     encyclopedia_filepath = message["encyclopedia_filepath"]
 
-    def create_with_retry():
-        exception = None
-        for _ in range(GAME_CREATION_TOTAL_TRIES):
-            try:
-                return WebsocketGameRunner.create(
-                    player_count=player_count,
-                    colors_filepath=colors_filepath,
-                    topics_filepath=topics_filepath,
-                    cards_filepath=cards_filepath,
-                    encyclopedia_filepath=encyclopedia_filepath,
-                    password=password,
-                    draw_fn_name=draw_fn_name,
-                )
-            except Exception as exc:
-                exception = exc
-        raise exception
-
     try:
-        runner = create_with_retry()
-        join_room(runner.name)
+        for progress in WebsocketGameRunner.create(
+            player_count=player_count,
+            colors_filepath=colors_filepath,
+            topics_filepath=topics_filepath,
+            cards_filepath=cards_filepath,
+            encyclopedia_filepath=encyclopedia_filepath,
+            password=password,
+            draw_fn_name=draw_fn_name,
+        ):
+            if progress["type"] == "message":
+                emit("create_room:progress", progress)
+                eventlet.sleep(0)
+            if progress["type"] == "result":
+                runner = progress["payload"]
+                join_room(runner.name)
     except ValueError as exc:
         return {
             "status": 500,
             "error": str(exc),
         }
+
     return {
         "status": 200,
         "game": {"name": runner.name},
