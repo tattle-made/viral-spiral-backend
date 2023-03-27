@@ -326,9 +326,14 @@ class Player(InGameModel):
 
         if card_instance.card.fake:
             # Deduct points of last player to share this card
-            Player.update(score=Player.score - 1).where(
-                Player.id_ == card_instance.from_.player.id
-            ).execute()
+            player = (
+                Player.select()
+                .where(Player.id_ == card_instance.from_.player.id)
+                .select()
+            )
+            if player:
+                Score.inc_clout(player, -1)
+
         # Discard all instanes of this (fake) card going around
         from .card_queue import PlayerCardQueue
 
