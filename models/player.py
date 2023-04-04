@@ -328,8 +328,8 @@ class Player(InGameModel):
             # Deduct points of last player to share this card
             player = (
                 Player.select()
-                .where(Player.id_ == card_instance.from_.player.id)
-                .select()
+                .where(Player.id_ == card_instance.from_.player.id_)
+                .first() 
             )
             if player:
                 Score.inc_clout(player, -1)
