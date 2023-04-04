@@ -1,4 +1,4 @@
-"""Converts a given XL sheet into a JSON file
+"""Converts a given XL sheet into a JSON file and downloads the images in the XL sheet, alongwith assigning them UUIDs
 
 The JSON objects can then be used to import data into the Database
 """
@@ -91,7 +91,8 @@ for idx in df.index[1:]:
                 "title": "",
                 "description": description_fake,
                 "fake": True,
-                "image": image_url
+                "image": image_url,
+                "tgb": tgb,
             }
         ],
         "tgb": tgb,
@@ -108,6 +109,7 @@ for idx in df.index[1:]:
             "description": row.iloc[use_iloc()],
             "bias_against": color,
             "fakes": [],
+            "fake": True, 
             "tgb": tgb,
             "image": image_token_creator(idx+2, use_iloc()+1, ws),
         }
@@ -142,7 +144,8 @@ for idx in df.index[1:]:
                     "affinity_towards": topic,
                     "affinity_count": 1,
                     "fake": True,
-                    "image": image_url
+                    "image": image_url,
+                    "tgb": tgb,
                 }
             ],
             "tgb": tgb,
@@ -167,7 +170,8 @@ for idx in df.index[1:]:
                     "affinity_towards": topic,
                     "affinity_count": -1,
                     "fake": True,
-                    "image": image_url
+                    "image": image_url,
+                    "tgb": tgb,
                 }
             ],
             "tgb": tgb,
@@ -185,4 +189,4 @@ print(json.dumps(cards))
 json_string = json.dumps(cards)
 
 with open('cards.json', 'w') as outfile:
-    outfile.write(json_string)
+    outfile.write(json_string)  
