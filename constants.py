@@ -12,7 +12,7 @@ VIRAL_SPIRAL_BIAS_COUNT = 5
 # cancel power
 CANCELLING_AFFINITY_COUNT = 0
 # If True, all players will be asked to vote instead of just the affinity
-CANCEL_VOTE_ALL_PLAYERS = True
+CANCEL_VOTE_ALL_PLAYERS = False
 
 # If bias against any topic reaches 3, the player receives the fake news power
 FAKE_NEWS_BIAS_COUNT = 0

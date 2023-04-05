@@ -65,7 +65,7 @@ class Card(InGameModel):
         Article, null=True, unique=False, backref="cards"
     )
 
-    image = peewee.FixedCharField(default="", max_length=50) # image url
+    image = peewee.FixedCharField(default="", max_length=50)  # image url
 
     def to_dict(self, **kwargs):
         """Calls peewee's model_to_dict and passes kwargs to it"""
@@ -236,5 +236,7 @@ class CardInstance(InGameModel):
         )
         completed_player_ids = [ci.player_id for ci in card_instances]
         select_args = []
+
+        # add cancelled player
 
         return self.game.player_set.where(~Player.id_.in_(completed_player_ids))

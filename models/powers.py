@@ -62,6 +62,9 @@ class CancelStatus(InGameModel):
     initiator = peewee.ForeignKeyField(Player)
     topic = peewee.ForeignKeyField(AffinityTopic)
 
+    # Keeps track of the final result of the voting. Possible values - -1 : unfinished poll, 0 : player wasnt cancelled, 1 : player was cancelled
+    final_status = peewee.SmallIntegerField(default=-1)
+
     class Meta:
         # Unique together
         indexes = ((("round", "against", "initiator", "game"), True),)
@@ -81,27 +84,15 @@ class CancelStatus(InGameModel):
         rounds = previous_full_round.round_set
 
         for round_ in rounds:
-            votes = (
-                CancelVote.select()
-                .join(cls)
-                .where(
-                    cls.against == player,
-                    cls.game == player.game,
-                    cls.round == round_,
-                    CancelVote.vote == True,
-                )
+            status = (
+                CancelStatus.select()
+                .where(CancelStatus.round_id == round_.id_)
+                .where(CancelStatus.against_id == player.id_)
+                .first()
             )
-            grouped = votes.select(
-                cls.initiator, peewee.fn.COUNT(CancelVote.id_).alias("votes")
-            ).group_by(cls.initiator)
+            status_bool = True if status and status.final_status else False
+            return status_bool
 
-            for row in grouped:
-                if (
-                    row.votes
-                    / player.game.player_set.where(Player.color == player.color).count()
-                    >= 0.5
-                ):
-                    return True
         return False
 
     @classmethod
@@ -117,11 +108,37 @@ class CancelStatus(InGameModel):
         CancelVote.initiate(cancel_status=cancel_status, initiator=initiator)
         return cancel_status
 
+    # This method is to be called everytime a new vote is casted. If all the votes aren't casted yet, final_status remains unchanged
+    @classmethod
+    def set_final_status(cls, cancel_status_id: str):
+        from itertools import filterfalse
+
+        MAJORITY_THRESHOLD = 0.5
+
+        votes = CancelVote.select().where(
+            CancelVote.cancel_status_id == cancel_status_id
+        )
+
+        total_votes = len(votes)
+        total_uncasted_votes = len(
+            list(filterfalse(lambda x: x.vote == 1 or x.vote == 0, votes))
+        )
+
+        if total_uncasted_votes > 0:
+            return
+        else:
+            total_yes_votes = len(list(filterfalse(lambda x: x.vote == 0, votes)))
+            vote_ratio = total_yes_votes / total_votes
+            voting_result = 1 if vote_ratio >= MAJORITY_THRESHOLD else 0
+            CancelStatus.update(final_status=voting_result).where(
+                CancelStatus.id_ == cancel_status_id
+            ).execute()
+
 
 class CancelVote(InGameModel):
     cancel_status = peewee.ForeignKeyField(CancelStatus)
     voter = peewee.ForeignKeyField(Player)
-    vote = peewee.BooleanField()
+    vote = peewee.SmallIntegerField(default=-1)
 
     class Meta:
         # Unique together
@@ -131,13 +148,19 @@ class CancelVote(InGameModel):
     def initiate(cls, cancel_status: CancelStatus, initiator: Player):
         # TODO use multi put
         for player in initiator.game.player_set:
-            if not (CANCEL_VOTE_ALL_PLAYERS or player.affinity_matches(
-                with_=initiator, towards=cancel_status.topic
-            )):
+            if not (
+                CANCEL_VOTE_ALL_PLAYERS
+                or player.affinity_matches(with_=initiator, towards=cancel_status.topic)
+            ):
                 continue
 
             voted = True if player.id_ == initiator.id_ else None
-            cls.create(cancel_status=cancel_status, voter=player, voted=voted, game=initiator.game)
+            cls.create(
+                cancel_status=cancel_status,
+                voter=player,
+                voted=voted,
+                game=initiator.game,
+            )
 
     @classmethod
     def pending_votes(cls, round_: Round):
@@ -145,4 +168,5 @@ class CancelVote(InGameModel):
             cls.select()
             .join(CancelStatus)
             .where(CancelStatus.round == round_, cls.game == round_.game)
+            .where(CancelVote.vote == -1)
         )
