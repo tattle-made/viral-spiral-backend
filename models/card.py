@@ -65,7 +65,7 @@ class Card(InGameModel):
         Article, null=True, unique=False, backref="cards"
     )
 
-    image = peewee.FixedCharField(default="", max_length=50) # image url
+    image = peewee.FixedCharField(default="", max_length=50)  # image url
 
     def to_dict(self, **kwargs):
         """Calls peewee's model_to_dict and passes kwargs to it"""
@@ -189,7 +189,7 @@ class CardInstance(InGameModel):
         variable = self.card.description[start_index + 1 : end_index]
         variable = variable.lower().strip()
 
-        if "other community" in variable:
+        if "other community" in variable or "Other community" in variable:
             color = self.game.color_set.where(Color.id_ != self.player.color_id).first()
             self.card.description = (
                 self.card.description[:start_index]
@@ -198,7 +198,7 @@ class CardInstance(InGameModel):
             )
             self.bias_against = color
             self.card.save()
-        elif "oppressed community" in variable:
+        elif "oppressed community" in variable or "Oppressed community" in variable:
             # TODO selec an oppressed community
             color = self.game.color_set.where(Color.id_ != self.player.color_id).first()
             self.card.description = (
@@ -208,7 +208,7 @@ class CardInstance(InGameModel):
             )
             self.bias_against = color
             self.card.save()
-        elif "dominant" in variable:
+        elif "dominant community" in variable or "Dominant community" in variable:
             color = self.game.color_set.where(Color.id_ != self.player.color_id).first()
             self.card.description = (
                 self.card.description[:start_index]
