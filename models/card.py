@@ -4,7 +4,6 @@ import peewee
 from playhouse.shortcuts import model_to_dict as mtd_original
 from .base import InGameModel
 from .player import Player
-from .encyclopedia import Article
 from .counters import AffinityTopic, Color
 
 
@@ -60,10 +59,6 @@ class Card(InGameModel):
 
     storyline = peewee.CharField(default="none")
     storyline_index = peewee.IntegerField(default=0)
-
-    encyclopedia_article = peewee.ForeignKeyField(
-        Article, null=True, unique=False, backref="cards"
-    )
 
     image = peewee.FixedCharField(default="", max_length=50)  # image url
 
