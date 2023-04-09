@@ -8,7 +8,6 @@ from constants import (
 )
 from .utils import model_to_dict
 from .base import InGameModel, Round, Game
-from .encyclopedia import Article
 from .counters import AffinityTopic, Color
 from exceptions import NotAllowed, NotFound
 from functools import lru_cache
@@ -345,16 +344,15 @@ class Player(InGameModel):
     def action_encyclopedia_search(self, card_id):
         """Returns this card's encyclopedia article"""
         from .card import Card
+        from .encyclopedia import Article
 
         card = Card.select().where(Card.id_ == card_id, Card.game == self.game).first()
-        article = (
-            Article.select()
-            .where(Article.title == card.description, Article.game == card.game)
-            .first()
-        )
-        # article = card.encyclopedia_article
+        if card.fake:
+            article = card.original.encyclopedia_article.first()
+        else:
+            article = card.encyclopedia_article.first()
         if article:
-            return article.render()
+            return article.render(fake=card.fake)
         return {}
 
     def all_actions(self):

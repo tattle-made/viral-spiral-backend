@@ -3,6 +3,7 @@ import json
 import peewee
 
 from .base import InGameModel
+from .card import Card
 
 
 class Article(InGameModel):
@@ -14,12 +15,13 @@ class Article(InGameModel):
     fake_type_ = peewee.CharField(null=True)
     fake_author = peewee.CharField(null=True)
     is_fake = peewee.BooleanField(null=True)
+    card = peewee.ForeignKeyField(
+        Card, null=True, unique=True, backref="encyclopedia_article"
+    )
 
     @classmethod
     def import_from_json(cls, json_dict=None, json_path=None, defaults=None):
         """First creates the original cards, then the fakes"""
-        from .card import Card
-
         if not json_dict:
             with open(json_path) as infile:
                 json_dict = json.load(infile)
@@ -42,9 +44,9 @@ class Article(InGameModel):
 
         super().import_from_json(json_dict=new_, defaults=defaults)
 
-    def render(self):
-        """Returns either the true or fake article"""
-        if self.is_fake and self.fake_content and self.fake_type_ and self.fake_author:
+    def render(self, fake: bool):
+        """Returns either the true or fake article depending on the `fake` argument"""
+        if fake and self.fake_content and self.fake_type_ and self.fake_author:
             return {
                 "title": self.title,
                 "content": self.fake_content,
