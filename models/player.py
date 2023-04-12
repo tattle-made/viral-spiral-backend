@@ -328,7 +328,7 @@ class Player(InGameModel):
             player = (
                 Player.select()
                 .where(Player.id_ == card_instance.from_.player.id_)
-                .first() 
+                .first()
             )
             if player:
                 Score.inc_clout(player, -1)
@@ -341,11 +341,10 @@ class Player(InGameModel):
             CardInstance.id_ == card_instance_id
         ).first()
 
-        
         card_instance.discarded = True
         card_instance.save()
 
-        PlayerCardQueue.dequeue(card_instance)       
+        PlayerCardQueue.dequeue(card_instance)
         PlayerCardQueue.mark_as_fake(card_instance.card)
         card_instance.card.discarded = True
         card_instance.card.save()
@@ -357,8 +356,13 @@ class Player(InGameModel):
         from .encyclopedia import Article
 
         card = Card.select().where(Card.id_ == card_id, Card.game == self.game).first()
+        if not card:
+            raise Exception("Encyclopedia Search : Card Not Found")
         if card.fake:
-            article = card.original.encyclopedia_article.first()
+            if card.original:
+                article = card.original.encyclopedia_article.first()
+            else:
+                article = card.encyclopedia_article.first()
         else:
             article = card.encyclopedia_article.first()
         if article:
