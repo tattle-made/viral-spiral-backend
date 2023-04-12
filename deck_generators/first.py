@@ -14,6 +14,26 @@ import random
 from constants import TGB_END_SCORE
 
 
+def _draw_true_cards(player: Player):
+    """
+    Test function only to be used during debugging and testing.
+    This version of the draw function only returns true cards.
+    Ideal for testing the turn into fake news power."""
+    tgb = player.game.total_global_bias()
+
+    card = (
+        Card.select()
+        .where(Card.game == player.game)
+        .where(Card.original_player == None)
+        .where(Card.affinity_towards != None)
+        .where(Card.fake == False)
+        .where(Card.tgb <= tgb)
+        .first()
+    )
+
+    return card.draw(player)
+
+
 def draw(player: Player):
     tgb = player.game.total_global_bias()
 
