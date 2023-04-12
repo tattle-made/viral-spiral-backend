@@ -144,3 +144,10 @@ These instructions are useful when you are running the server inside a docker co
 4. Open VS code and go to the Run and Debug screen. Click on the play button and choose "debugpy" to connect to the server.
 
 You should be able to set breakpoints now. Configuration for connecting to the remote host can be seen in `.vscode/launch.json`
+
+
+# Testing
+```python
+python -m unittest
+```
+todo : add commands to run individual test cases
