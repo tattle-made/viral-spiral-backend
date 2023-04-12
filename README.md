@@ -148,6 +148,6 @@ You should be able to set breakpoints now. Configuration for connecting to the r
 
 # Testing
 ```python
-python -m unittest
+python -m unittest -v
 ```
 todo : add commands to run individual test cases

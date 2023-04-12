@@ -61,13 +61,14 @@ class TestEncyclopedia(unittest.TestCase):
             .where(Card.original_player == None)
             .where(Card.bias_against != None)
             .where(Card.bias_against != current_player.color)
-            .where(Card.tgb <= 2)
+            .where(Card.tgb <= TGB)
             .first()
         )
 
         card_instance = card.draw(self.current_player)
-        print(card_instance.id_)
+        print(card_instance.card.description)
         article = self.current_player.action_encyclopedia_search(card_instance.card.id_)
+        print(article)
         self.assertIn("title", article)
         self.assertIn("content", article)
         self.assertIn("type", article)
@@ -75,16 +76,108 @@ class TestEncyclopedia(unittest.TestCase):
         self.assertEqual(len(article.get("content")) > 0, True)
 
     def test_search_true_affinity_card(self):
-        pass
+        TGB = 2  # chosen just so we have enough cards to sample from
+        game = TestEncyclopedia.game
+        current_player = TestEncyclopedia.current_player
+
+        card = (
+            Card.select()
+            .where(Card.game == game)
+            .where(Card.original_player == None)
+            .where(Card.affinity_towards != None)
+            .where(Card.fake == False)
+            .where(Card.tgb <= TGB)
+            .first()
+        )
+
+        card_instance = card.draw(self.current_player)
+        print(card_instance.card.description)
+        article = self.current_player.action_encyclopedia_search(card_instance.card.id_)
+        print(article)
+        self.assertIn("title", article)
+        self.assertIn("content", article)
+        self.assertIn("type", article)
+        self.assertIn("author", article)
+        self.assertEqual(len(article.get("content")) > 0, True)
 
     def test_search_false_affinity_card(self):
-        pass
+        TGB = 2  # chosen just so we have enough cards to sample from
+        game = TestEncyclopedia.game
+        current_player = TestEncyclopedia.current_player
+
+        card = (
+            Card.select()
+            .where(Card.game == game)
+            .where(Card.original_player == None)
+            .where(Card.affinity_towards != None)
+            .where(Card.fake == True)
+            .where(Card.faked_by == None)
+            .where(Card.tgb <= TGB)
+            .first()
+        )
+
+        card_instance = card.draw(self.current_player)
+        print(card_instance.card.description)
+        article = self.current_player.action_encyclopedia_search(card_instance.card.id_)
+        print(article)
+        self.assertIn("title", article)
+        self.assertIn("content", article)
+        self.assertIn("type", article)
+        self.assertIn("author", article)
+        self.assertEqual(len(article.get("content")) > 0, True)
 
     def test_search_true_topical_card(self):
-        pass
+        TGB = 2  # chosen just so we have enough cards to sample from
+        game = TestEncyclopedia.game
+        current_player = TestEncyclopedia.current_player
+
+        card = (
+            Card.select()
+            .where(Card.game == game)
+            .where(Card.original_player == None)
+            .where(Card.affinity_towards == None)
+            .where(Card.bias_against == None)
+            .where(Card.fake == False)
+            .where(Card.tgb <= TGB)
+            .first()
+        )
+
+        card_instance = card.draw(self.current_player)
+        print(card_instance.card.description)
+        article = self.current_player.action_encyclopedia_search(card_instance.card.id_)
+        print(article)
+        self.assertIn("title", article)
+        self.assertIn("content", article)
+        self.assertIn("type", article)
+        self.assertIn("author", article)
+        self.assertEqual(len(article.get("content")) > 0, True)
 
     def test_search_false_topical_card(self):
-        pass
+        TGB = 2  # chosen just so we have enough cards to sample from
+        game = TestEncyclopedia.game
+        current_player = TestEncyclopedia.current_player
+
+        card = (
+            Card.select()
+            .where(Card.game == game)
+            .where(Card.original_player == None)
+            .where(Card.affinity_towards == None)
+            .where(Card.bias_against == None)
+            .where(Card.fake == True)
+            .where(Card.faked_by == None)
+            .where(Card.tgb <= TGB)
+            .first()
+        )
+
+        card_instance = card.draw(self.current_player)
+        print(card_instance.card.description)
+        article = self.current_player.action_encyclopedia_search(card_instance.card.id_)
+        print(article)
+        self.assertIn("title", article)
+        self.assertIn("content", article)
+        self.assertIn("type", article)
+        self.assertIn("author", article)
+        self.assertEqual(len(article.get("content")) > 0, True)
 
     @classmethod
     def tearDownClass(self) -> None:
