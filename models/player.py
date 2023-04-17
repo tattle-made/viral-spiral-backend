@@ -166,6 +166,11 @@ class Player(InGameModel):
             if not to_player:
                 raise NotFound("Player not found")
 
+        # todo :
+        # get the current round and check if this is a valid move
+        # if yes, continue
+        # if not, return "Card has already been shared"
+
         # Trigger the receive card events
         # Will raise an exception if cannot create
         to_card_instance = CardInstance.create(
@@ -244,12 +249,12 @@ class Player(InGameModel):
                 dequeue=False,
             )
 
-        return {"passed_to": [model_to_dict(player) for player in recipients]}
-
         # Dequeue this card
         from .card_queue import PlayerCardQueue
 
         PlayerCardQueue.dequeue(card_instance)
+
+        return {"passed_to": [model_to_dict(player) for player in recipients]}
 
         # Keep the other card
         if keep_card_instance_id:
