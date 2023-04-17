@@ -216,11 +216,15 @@ class Game(Model):
         game = cls.create(name=name, **model_kwargs)
         yield {"type": "message", "payload": "Game Initialized"}
         color_objs = []
-        for color_name in json.load(open(colors_filepath)):
-            color_objs.append(Color.create(name=color_name, game=game))
+        with open(colors_filepath, "r") as colors_file:
+            color_names = json.load(colors_file)
+            for color_name in color_names:
+                color_objs.append(Color.create(name=color_name, game=game))
 
         topic_objs = []
-        all_topic_objs = json.load(open(topics_filepath))
+        with open(topics_filepath, "r") as topics_file:
+            all_topic_objs = json.load(topics_file)
+
         selected_topic_objs = random.choices(all_topic_objs, k=NUM_AFFINITY_TOPICS)
         for topic_name in selected_topic_objs:
             topic_objs.append(AffinityTopic.create(name=topic_name, game=game))

@@ -144,3 +144,15 @@ These instructions are useful when you are running the server inside a docker co
 4. Open VS code and go to the Run and Debug screen. Click on the play button and choose "debugpy" to connect to the server.
 
 You should be able to set breakpoints now. Configuration for connecting to the remote host can be seen in `.vscode/launch.json`
+
+
+# Testing
+```python
+python -m unittest -v
+```
+todo : add commands to run individual test cases
+
+
+# Glossary
+- Round : A card's lifecyle, starts from the card being drawn and continues till the card has been passed to every player or has been kept or discarded by a player. 
+- Full Round : A turn cycle, includes every player finishing their round once

@@ -8,7 +8,6 @@ from constants import (
 )
 from .utils import model_to_dict
 from .base import InGameModel, Round, Game
-from .encyclopedia import Article
 from .counters import AffinityTopic, Color
 from exceptions import NotAllowed, NotFound
 from functools import lru_cache
@@ -343,27 +342,40 @@ class Player(InGameModel):
             if player:
                 Score.inc_clout(player, -1)
 
-        # Discard all instanes of this (fake) card going around
+        # Discard all instanes of this (fake) card going around WITHOUT affecting the SCORE
         from .card_queue import PlayerCardQueue
+        from .card import CardInstance
 
-        self.action_discard_card(card_instance_id)
+        card_instance = self.card_instances.where(
+            CardInstance.id_ == card_instance_id
+        ).first()
+
+        card_instance.discarded = True
+        card_instance.save()
+
+        PlayerCardQueue.dequeue(card_instance)
         PlayerCardQueue.mark_as_fake(card_instance.card)
         card_instance.card.discarded = True
         card_instance.card.save()
+        return model_to_dict(card_instance)
 
     def action_encyclopedia_search(self, card_id):
         """Returns this card's encyclopedia article"""
         from .card import Card
+        from .encyclopedia import Article
 
         card = Card.select().where(Card.id_ == card_id, Card.game == self.game).first()
-        article = (
-            Article.select()
-            .where(Article.title == card.description, Article.game == card.game)
-            .first()
-        )
-        # article = card.encyclopedia_article
+        if not card:
+            raise Exception("Encyclopedia Search : Card Not Found")
+        if card.fake:
+            if card.original:
+                article = card.original.encyclopedia_article.first()
+            else:
+                article = card.encyclopedia_article.first()
+        else:
+            article = card.encyclopedia_article.first()
         if article:
-            return article.render()
+            return article.render(fake=card.fake)
         return {}
 
     def all_actions(self):

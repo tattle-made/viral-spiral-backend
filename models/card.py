@@ -4,7 +4,6 @@ import peewee
 from playhouse.shortcuts import model_to_dict as mtd_original
 from .base import InGameModel
 from .player import Player
-from .encyclopedia import Article
 from .counters import AffinityTopic, Color
 
 
@@ -189,7 +188,7 @@ class CardInstance(InGameModel):
         variable = self.card.description[start_index + 1 : end_index]
         variable = variable.lower().strip()
 
-        if "other community" in variable:
+        if "other community" in variable or "Other community" in variable:
             color = self.game.color_set.where(Color.id_ != self.player.color_id).first()
             self.card.description = (
                 self.card.description[:start_index]
@@ -198,7 +197,8 @@ class CardInstance(InGameModel):
             )
             self.bias_against = color
             self.card.save()
-        elif "oppressed community" in variable:
+            return color
+        elif "oppressed community" in variable or "Oppressed community" in variable:
             # TODO selec an oppressed community
             color = self.game.color_set.where(Color.id_ != self.player.color_id).first()
             self.card.description = (
@@ -208,7 +208,8 @@ class CardInstance(InGameModel):
             )
             self.bias_against = color
             self.card.save()
-        elif "dominant" in variable:
+            return color
+        elif "dominant community" in variable or "Dominant community" in variable:
             color = self.game.color_set.where(Color.id_ != self.player.color_id).first()
             self.card.description = (
                 self.card.description[:start_index]
@@ -217,14 +218,19 @@ class CardInstance(InGameModel):
             )
             self.bias_against = color
             self.card.save()
+            return color
 
     def create_fake_news(self, fake: Card):
         """Changes the details of the card"""
         assert fake in self.card.fakes
         self.card = fake
         self.card.faked_by = self.player
+        self.card.original_player = self.player
         self.card.save()
-        self.set_dynamic()
+        color = self.set_dynamic()
+        if color:
+            self.card.bias_against = color
+            self.card.save()
         self.save()
 
     def allowed_recipients(self):
