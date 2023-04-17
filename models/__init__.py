@@ -24,4 +24,5 @@ ALL_MODELS = [
     Card,
     CardInstance,
     PlayerCardQueue,
+    Article,
 ]

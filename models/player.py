@@ -66,7 +66,14 @@ class Player(InGameModel):
         return Score.affinity(self.score_set, towards)
 
     def affinity_matches(self, with_, towards: AffinityTopic) -> bool:
-        """Returns True if self's affinity matches with `with_`'s affinity"""
+        """Returns True if self's affinity matches with `with_`'s affinity
+        As an example, if player affinities for cats are as follows :
+            P1 = +3, P2 = +1, P3 = -1, P4 = 0
+            P1's affinity matches with P2 but not with P3 and P4
+        and if the player affinities for cats are as follows :
+            P1 = -4, P2 = -1, P3 = +1, P4 = 0
+            P1's affinity matches with P2 but not P3 and P4
+        """
         return self.affinity(towards=towards) * with_.affinity(towards=towards) >= 1
 
     def bias_matches(self, with_, against: Color) -> bool:
@@ -284,11 +291,13 @@ class Player(InGameModel):
 
     def action_vote_cancel(self, cancel_status_id, vote: bool = False):
         """Vote True/False to cancel a player"""
-        from .powers import CancelVote
+        from .powers import CancelVote, CancelStatus
 
         CancelVote.update(vote=vote).where(CancelVote.voter == self).where(
             CancelVote.cancel_status_id == cancel_status_id
         ).execute()
+
+        CancelStatus.set_final_status(cancel_status_id)
 
     def action_fake_news(self, card_instance_id: str, fake_card_id: str):
         """Convert a card into fake news"""
