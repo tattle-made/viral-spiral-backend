@@ -28,7 +28,7 @@ import sys
 from models import Score
 
 from constants import GAME_CREATION_TOTAL_TRIES
-from models import Game, Player, Card, CardInstance, CancelVote, FullRound
+from models import Game, Player, Card, CardInstance, CancelVote, FullRound, db
 from models.messages import (
     ERROR_GENERIC,
     HEARTBEAT,
@@ -109,7 +109,7 @@ class WebsocketGameRunner(GameRunner):
     @classmethod
     def send_to_game(cls, game: Game, data=None, event="text_response"):
         json.dumps(data)  # If data isn't json dumpable, raise the error here
-        logging.info(f"Emmitting to game {game.name} - event {event}")
+        # logging.info(f"Emmitting to game {game.name} - event {event}")
         socketio.emit(event, {"data": data}, to=game.name)
 
     @classmethod
@@ -117,10 +117,10 @@ class WebsocketGameRunner(GameRunner):
         json.dumps(data)  # If data isn't json dumpable, raise the error here
 
         if player.client_id:
-            logging.info(
-                f"Emmitting to player {player.name} - event {event} | game"
-                f" {player.game.name}"
-            )
+            # logging.info(
+            #     f"Emmitting to player {player.name} - event {event} | game"
+            #     f" {player.game.name}"
+            # )
             socketio.emit(event, {"data": data}, to=player.client_id)
 
     def invoke_player_action(self, player: Player, card_instance: CardInstance):
@@ -192,6 +192,7 @@ class WebsocketGameRunner(GameRunner):
             },
             "action_performed",
         )
+        self.send_to_game(self.game, self.game.about(), "about_game")
         return result
 
     def get_queued_card(self, player_name):
@@ -325,6 +326,54 @@ def join_game(message):
         }
     else:
         return {"status": 404, "error": f"Game not found {game_name}"}
+
+
+@socketio.event
+def player_hand(message):
+    logging.info(
+        f"Incoming event - {inspect.getframeinfo(inspect.currentframe()).function} |"
+        f" {message}"
+    )
+    game_name = message["game"]
+    player_id = message["player"]
+    game = Game.select().where(Game.name == game_name)
+
+    print("----")
+    print(game.first().id_, player_id)
+    print("----")
+
+    cursor = db.execute_sql(
+        """
+        SELECT card.id_ as cid, cardinstance.id_ as ciid, card.description, card.image
+        FROM card
+        INNER JOIN cardinstance 
+        ON cardinstance.card_id=card.id_
+        WHERE cardinstance.id_ in (
+            SELECT card_instance_id
+            FROM playerhand
+            WHERE game_id='"""
+        + game.first().id_
+        + "'AND player_id='"
+        + player_id
+        + "')"
+    )
+
+    cards = []
+
+    for row in cursor.fetchall():
+        cards.append(
+            {
+                "card_id": row[0],
+                "card_instance_id": row[1],
+                "title": row[2],
+                "image": row[3],
+            }
+        )
+
+    return {
+        "status": 200,
+        "hand": cards,
+    }
 
 
 @socketio.event

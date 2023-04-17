@@ -111,6 +111,9 @@ class Player(InGameModel):
             CardInstance.id_ == card_instance_id
         ).first()
 
+        if not card_instance:
+            print("card instance is none")
+
         if discard:
             card_instance.discarded = True
             card_instance.save()
@@ -134,8 +137,7 @@ class Player(InGameModel):
             original_player = Player.select().where(Player.id_ == self.id_).first()
             Score.inc_clout(original_player, -1)
 
-        PlayerHand.create(game=card_instance.card.game,
-                          player=self.id_, card_instance=card_instance)
+        PlayerHand.create(game=self.game, player=self.id_, card_instance=card_instance)
 
         return model_to_dict(card_instance)
 
@@ -177,13 +179,21 @@ class Player(InGameModel):
             if not to_player:
                 raise NotFound("Player not found")
 
+        # todo :
+        # get the current round and check if this is a valid move
+        # if yes, continue
+        # if not, return "Card has already been shared in this round"
+
         # Trigger the receive card events
         # Will raise an exception if cannot create
+        print(card_instance.card, card_instance, to_player, self.game)
+
         to_card_instance = CardInstance.create(
             card=card_instance.card,
             from_=card_instance,
             player=to_player,
             game=self.game,
+            clone=card_instance.clone,
         )
         to_player.event_receive_card(to_card_instance)
 
@@ -232,39 +242,44 @@ class Player(InGameModel):
         Can specify the player IDs in the `to` list"""
         from .powers import VIRAL_SPIRAL, PlayerPower
         from .card import CardInstance
+        from .playerhand import PlayerHand
 
         card_instance = self.card_instances.where(
             CardInstance.id_ == pass_card_instance_id
         ).first()
 
-        if not self.current:
-            raise NotAllowed("Can't perform special power if not drawn card")
+        # if not self.current:
+        #     raise NotAllowed("Can't perform special power if not drawn card")
         if not card_instance:
             raise NotFound("Card instance not found")
         if not PlayerPower.get_latest(name=VIRAL_SPIRAL, player=self).active:
             raise NotAllowed("Viral spiral power missing to pass to all")
 
-        recipients = card_instance.allowed_recipients()
+        cloned_ci = CardInstance.create(
+            card=card_instance.card,
+            from_=None,
+            player=self,
+            game=self.game,
+            clone=card_instance.clone + 1,
+        )
+
+        cloned_ci.card.original_player = self
+        cloned_ci.card.save()
+
+        recipients = cloned_ci.allowed_recipients()
         if to:
             recipients = [rec for rec in recipients if rec.id_ in to]
 
         for player in recipients:
             self.action_pass_card(
-                card_instance=card_instance,
+                card_instance=cloned_ci,
                 to_player=player,
                 dequeue=False,
             )
+        
+        PlayerHand.delete().where(PlayerHand.card_instance==card_instance).execute()
 
         return {"passed_to": [model_to_dict(player) for player in recipients]}
-
-        # Dequeue this card
-        from .card_queue import PlayerCardQueue
-
-        PlayerCardQueue.dequeue(card_instance)
-
-        # Keep the other card
-        if keep_card_instance_id:
-            self.action_keep_card(keep_card_instance_id)
 
     def action_initiate_cancel(self, against: str, topic_id: str):
         """Initiates a round of voting to cancel a player.
@@ -319,8 +334,7 @@ class Player(InGameModel):
         if not card_instance:
             raise NotFound(f"Card instance not found {card_instance_id}")
 
-        fake_card = card_instance.card.fakes.where(
-            Card.id_ == fake_card_id).first()
+        fake_card = card_instance.card.fakes.where(Card.id_ == fake_card_id).first()
         if not fake_card:
             raise NotFound(f"Fake card not found {fake_card_id}")
 
@@ -352,9 +366,7 @@ class Player(InGameModel):
         else:
             # Deduct point of the player who marked the card fake incorrectly
             player = (
-                Player.select()
-                .where(Player.id_ == card_instance.player_id)
-                .first()
+                Player.select().where(Player.id_ == card_instance.player_id).first()
             )
             if player:
                 Score.inc_clout(player, -1)
@@ -508,8 +520,7 @@ class Player(InGameModel):
                 viral_spiral_bias_check = True
                 break
         has_viral_spiral = viral_spiral_affinity_check and viral_spiral_bias_check
-        PlayerPower.update(name=VIRAL_SPIRAL, player=self,
-                           active=has_viral_spiral)
+        PlayerPower.update(name=VIRAL_SPIRAL, player=self, active=has_viral_spiral)
 
         # Cancel
         has_cancel = self.has_initiate_cancel()
@@ -577,7 +588,7 @@ class Score(InGameModel):
     @classmethod
     def inc_affinity(cls, player: Player, affinity: AffinityTopic, inc: str):
         current_affinity = player.affinity(towards=affinity)
-        
+
         if inc == "penalty":
             if current_affinity > 0:
                 (
@@ -598,9 +609,7 @@ class Score(InGameModel):
                     .execute()
                 )
 
-        
-        else: 
-
+        else:
             (
                 Score.update({Score.value: Score.value + int(inc)})
                 .where(Score.game == player.game)

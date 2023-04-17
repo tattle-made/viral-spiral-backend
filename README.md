@@ -156,3 +156,15 @@ todo : add commands to run individual test cases
 # Glossary
 - Round : A card's lifecyle, starts from the card being drawn and continues till the card has been passed to every player or has been kept or discarded by a player. 
 - Full Round : A turn cycle, includes every player finishing their round once
+
+# Special Powers
+
+## Viral Spiral
+
+### Description
+
+### User flows
+
+### How its implemented
+
+### Testing the Feature

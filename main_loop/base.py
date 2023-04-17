@@ -57,9 +57,9 @@ class GameRunner(ABC):
 
         while True:
             # First send out the heartbeat
-            self.game.heartbeat()
+            # self.game.heartbeat()
 
-            logging.info("doing round")
+            # logging.info("doing round")
             self.game.update_powers()
             if not self.game.active():
                 self.logger.info("Game has ended")
