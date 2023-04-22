@@ -3,8 +3,8 @@ FROM python:3.9.5-slim
 WORKDIR /app
 
 RUN apt-get update \
-&& apt-get -y install g++ libpq-dev gcc unixodbc unixodbc-dev default-libmysqlclient-dev python3-dev \
-&& apt-get -y install vim tmux curl wget net-tools # Debugging
+    && apt-get -y install g++ libpq-dev gcc unixodbc unixodbc-dev default-libmysqlclient-dev python3-dev \
+    && apt-get -y install vim tmux curl wget net-tools zsh # Debugging
 
 COPY . /app/
 

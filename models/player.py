@@ -103,6 +103,9 @@ class Player(InGameModel):
             CardInstance.id_ == card_instance_id
         ).first()
 
+        if not card_instance:
+            print("card instance is none")
+
         if discard:
             card_instance.discarded = True
             card_instance.save()
@@ -169,10 +172,12 @@ class Player(InGameModel):
         # todo :
         # get the current round and check if this is a valid move
         # if yes, continue
-        # if not, return "Card has already been shared"
+        # if not, return "Card has already been shared in this round"
 
         # Trigger the receive card events
         # Will raise an exception if cannot create
+        print(card_instance.card, card_instance, to_player, self.game)
+
         to_card_instance = CardInstance.create(
             card=card_instance.card,
             from_=card_instance,
