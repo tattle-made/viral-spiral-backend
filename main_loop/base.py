@@ -47,7 +47,8 @@ class GameRunner(ABC):
         """Invokes actions and waits until no cards are queued"""
         # If this player is pending cancellation punishment then skip them
         if CancelStatus.cancelled(drawing_player):
-            return
+            print(str(drawing_player) + " was cancelled")
+            return False
 
         while True:
             # First send out the heartbeat
@@ -57,7 +58,7 @@ class GameRunner(ABC):
             self.game.update_powers()
             if not self.game.active():
                 self.logger.info("Game has ended")
-                return
+                return False # See if False is indeed needed for game end (needs to be checked)
             # self.logger.info("Looping")
             done = True
             with db:
@@ -76,15 +77,18 @@ class GameRunner(ABC):
             if done:
                 break
             self.socketio.sleep(1)
+        
+        return True
 
     def do_round(self, drawing_player: Player, full_round: FullRound):
         """Performs a round in `game` with `drawing_player` drawing a card"""
-        self.finish_round(drawing_player)  # Finish any older rounds
-        with db:
-            card_instance = self.game.draw(drawing_player, full_round=full_round)
-            if not card_instance:
-                raise Exception("Out of cards!")
-        self.finish_round(drawing_player)
+        flag = self.finish_round(drawing_player)  # Finish any older rounds
+        if flag:
+            with db:
+                card_instance = self.game.draw(drawing_player, full_round=full_round)
+                if not card_instance:
+                    raise Exception("Out of cards!")
+            self.finish_round(drawing_player)
 
     def exit(self):
         """Run any exit operations if you want"""
