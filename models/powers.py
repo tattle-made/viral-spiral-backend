@@ -64,6 +64,8 @@ class CancelStatus(InGameModel):
 
     # Keeps track of the final result of the voting. Possible values - -1 : unfinished poll, 0 : player wasnt cancelled, 1 : player was cancelled
     final_status = peewee.SmallIntegerField(default=-1)
+    # Keeps track of whether the player has already been cancelled once or not. Values: 0 : Default, player wasnt cancelled, 1 : player has already been cancelled (yet to check for redundancy with cancel status)
+    power_executed = peewee.SmallIntegerField(default=0)
 
     class Meta:
         # Unique together
@@ -76,24 +78,54 @@ class CancelStatus(InGameModel):
             current_full_round = player.game.current_round.full_round
             previous_full_round = current_full_round.previous()
         except FullRound.DoesNotExist:
+            print("Returning at first try")
             return False
 
         if not previous_full_round:
+            print("Returning at first if")
             return False
 
-        rounds = previous_full_round.round_set
+        prev_rounds = previous_full_round.round_set
+        current_rounds = current_full_round.round_set
+        
 
-        for round_ in rounds:
+        for round_ in prev_rounds:
+            print(round_.id_)
             status = (
                 CancelStatus.select()
                 .where(CancelStatus.round_id == round_.id_)
                 .where(CancelStatus.against_id == player.id_)
+                .where(CancelStatus.power_executed == 0)
+                .first()
+            )
+            status_bool= True if status and status.final_status else False
+            if status_bool:
+                CancelStatus.update(power_executed=1).where(CancelStatus.round_id == round_.id_).where(CancelStatus.against_id == player.id_).execute()
+                return status_bool
+
+
+            
+            
+        
+        for round_ in current_rounds:
+            print(round_.id_)
+            status = (
+                CancelStatus.select()
+                .where(CancelStatus.round_id == round_.id_)
+                .where(CancelStatus.against_id == player.id_)
+                .where(CancelStatus.power_executed == 0)
                 .first()
             )
             status_bool = True if status and status.final_status else False
-            return status_bool
-
-        return False
+            if status_bool:
+                CancelStatus.update(power_executed=1).where(CancelStatus.round_id == round_.id_).where(CancelStatus.against_id == player.id_).execute()
+                return status_bool
+            
+            
+        print("status_bool returned as false")  
+        return status_bool
+        # print("Just returning false")
+        # return False
 
     @classmethod
     def initiate(cls, initiator: Player, against: Player, topic: AffinityTopic):
@@ -123,16 +155,19 @@ class CancelStatus(InGameModel):
         total_uncasted_votes = len(
             list(filterfalse(lambda x: x.vote == 1 or x.vote == 0, votes))
         )
+        
 
         if total_uncasted_votes > 0:
             return
         else:
             total_yes_votes = len(list(filterfalse(lambda x: x.vote == 0, votes)))
             vote_ratio = total_yes_votes / total_votes
+            
             voting_result = 1 if vote_ratio >= MAJORITY_THRESHOLD else 0
             CancelStatus.update(final_status=voting_result).where(
                 CancelStatus.id_ == cancel_status_id
             ).execute()
+            
 
 
 class CancelVote(InGameModel):
