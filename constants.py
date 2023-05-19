@@ -20,7 +20,7 @@ FAKE_NEWS_BIAS_COUNT = 0
 ACTIVE_STR = "active"
 
 # If a player reaches a number of points, they win and the game ends
-PLAYER_WIN_SCORE = 15
+PLAYER_WIN_SCORE = 7 # changed for a quicker game
 # If the TBG reaches a number of points, the game ends
 TGB_END_SCORE = 15
 
