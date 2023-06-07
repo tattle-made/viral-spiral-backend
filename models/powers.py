@@ -90,7 +90,7 @@ class CancelStatus(InGameModel):
         
 
         for round_ in prev_rounds:
-            print(round_.id_)
+            # print(round_.id_)
             status = (
                 CancelStatus.select()
                 .where(CancelStatus.round_id == round_.id_)
@@ -101,6 +101,7 @@ class CancelStatus(InGameModel):
             status_bool= True if status and status.final_status else False
             if status_bool:
                 CancelStatus.update(power_executed=1).where(CancelStatus.round_id == round_.id_).where(CancelStatus.against_id == player.id_).execute()
+                print("status bool was returned as true!")
                 return status_bool
 
 
@@ -108,7 +109,7 @@ class CancelStatus(InGameModel):
             
         
         for round_ in current_rounds:
-            print(round_.id_)
+            # print(round_.id_)
             status = (
                 CancelStatus.select()
                 .where(CancelStatus.round_id == round_.id_)
@@ -119,13 +120,13 @@ class CancelStatus(InGameModel):
             status_bool = True if status and status.final_status else False
             if status_bool:
                 CancelStatus.update(power_executed=1).where(CancelStatus.round_id == round_.id_).where(CancelStatus.against_id == player.id_).execute()
+                print("status bool was returned as true!")
                 return status_bool
             
             
-        print("status_bool returned as false")  
+         
         return status_bool
-        # print("Just returning false")
-        # return False
+       
 
     @classmethod
     def initiate(cls, initiator: Player, against: Player, topic: AffinityTopic):
@@ -141,7 +142,7 @@ class CancelStatus(InGameModel):
         return cancel_status
 
     # This method is to be called everytime a new vote is casted. If all the votes aren't casted yet, final_status remains unchanged
-    @classmethod
+    @classmethod 
     def set_final_status(cls, cancel_status_id: str):
         from itertools import filterfalse
 
