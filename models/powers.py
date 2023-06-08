@@ -5,7 +5,7 @@ from .base import InGameModel, Game, Round, db, model_id_generator, FullRound
 from .player import Player
 from .counters import AffinityTopic
 
-from constants import ACTIVE_STR, CANCEL_VOTE_ALL_PLAYERS
+from constants import ACTIVE_STR, CANCEL_VOTE_ALL_PLAYERS, CANCELLING_ALLOW_POLL
 from exceptions import NotFound, DuplicateAction
 
 VIRAL_SPIRAL = "viral_spiral"
@@ -137,37 +137,45 @@ class CancelStatus(InGameModel):
             topic=topic,
             game=initiator.game,
         )
-
-        CancelVote.initiate(cancel_status=cancel_status, initiator=initiator)
+        if CANCELLING_ALLOW_POLL:
+            CancelVote.initiate(cancel_status=cancel_status, initiator=initiator)
+        else: 
+            CancelStatus.set_final_status(cancel_status.id_)
         return cancel_status
 
     # This method is to be called everytime a new vote is casted. If all the votes aren't casted yet, final_status remains unchanged
     @classmethod 
     def set_final_status(cls, cancel_status_id: str):
-        from itertools import filterfalse
+        if CANCELLING_ALLOW_POLL: 
+            from itertools import filterfalse
 
-        MAJORITY_THRESHOLD = 0.5
+            MAJORITY_THRESHOLD = 0.5
 
-        votes = CancelVote.select().where(
-            CancelVote.cancel_status_id == cancel_status_id
-        )
+            votes = CancelVote.select().where(
+                CancelVote.cancel_status_id == cancel_status_id
+            )
 
-        total_votes = len(votes)
-        total_uncasted_votes = len(
-            list(filterfalse(lambda x: x.vote == 1 or x.vote == 0, votes))
-        )
-        
-
-        if total_uncasted_votes > 0:
-            return
-        else:
-            total_yes_votes = len(list(filterfalse(lambda x: x.vote == 0, votes)))
-            vote_ratio = total_yes_votes / total_votes
+            total_votes = len(votes)
+            total_uncasted_votes = len(
+                list(filterfalse(lambda x: x.vote == 1 or x.vote == 0, votes))
+            )
             
-            voting_result = 1 if vote_ratio >= MAJORITY_THRESHOLD else 0
-            CancelStatus.update(final_status=voting_result).where(
+
+            if total_uncasted_votes > 0:
+                return
+            else:
+                total_yes_votes = len(list(filterfalse(lambda x: x.vote == 0, votes)))
+                vote_ratio = total_yes_votes / total_votes
+                
+                voting_result = 1 if vote_ratio >= MAJORITY_THRESHOLD else 0
+                CancelStatus.update(final_status=voting_result).where(
+                    CancelStatus.id_ == cancel_status_id
+                ).execute()
+        else:
+            CancelStatus.update(final_status=1).where(
                 CancelStatus.id_ == cancel_status_id
             ).execute()
+
             
 
 

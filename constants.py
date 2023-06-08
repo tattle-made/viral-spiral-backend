@@ -11,6 +11,8 @@ VIRAL_SPIRAL_BIAS_COUNT = 5
 # If the affinity towards any topic reaches 3, the player receives the
 # cancel power
 CANCELLING_AFFINITY_COUNT = 1
+# if true, cancel has the polling mechanic
+CANCELLING_ALLOW_POLL = False
 # If True, all players will be asked to vote instead of just the affinity
 CANCEL_VOTE_ALL_PLAYERS = False
 

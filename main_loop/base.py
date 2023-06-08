@@ -5,6 +5,7 @@ import sys
 from abc import ABC, abstractmethod
 from typing import Callable
 from models import db, Game, Player, CardInstance, CancelStatus, CancelVote, FullRound
+from constants import CANCELLING_ALLOW_POLL
 
 
 class GameRunner(ABC):
@@ -71,7 +72,7 @@ class GameRunner(ABC):
                     if (card_instance := player.get_queued_card_instance()) is not None:
                         self.invoke_player_action(player, card_instance)
                         done = False
-                    if (pending_vote := player.get_pending_cancel_vote()) is not None:
+                    if ((pending_vote := player.get_pending_cancel_vote()) is not None) and CANCELLING_ALLOW_POLL:
                         self.invoke_vote(player, pending_vote)
                         done = False
                     # TODO see if you really need to update powers after each turn
