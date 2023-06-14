@@ -422,7 +422,7 @@ class Player(InGameModel):
             CancelVote.pending_votes(round_=self.game.current_round)
             .where(CancelVote.voter == self)
             .exists()
-        ):
+        ) and CANCELLING_AFFINITY_COUNT:
             allowed_actions.append("vote_cancel")
 
         return allowed_actions

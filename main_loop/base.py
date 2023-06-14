@@ -5,6 +5,7 @@ import sys
 from abc import ABC, abstractmethod
 from typing import Callable
 from models import db, Game, Player, CardInstance, CancelStatus, CancelVote, FullRound
+from constants import CANCELLING_ALLOW_POLL
 
 
 class GameRunner(ABC):
@@ -48,6 +49,10 @@ class GameRunner(ABC):
         # If this player is pending cancellation punishment then skip them
         if CancelStatus.cancelled(drawing_player):
             print(str(drawing_player) + " was cancelled")
+            # update the sequence of players regardless of the player being cancelled for the turn order to be maintained
+            Player.update(sequence=Player.sequence + 100, current=True).where( 
+                Player.id_ == drawing_player.id_ 
+            ).execute()
             return False
 
         while True:
@@ -64,12 +69,10 @@ class GameRunner(ABC):
             with db:
                 for player in self.players.iterator():
                     # TODO see if you can optimise this in a single query
-                    # if CancelStatus.cancelled(player):
-                    #     continue
                     if (card_instance := player.get_queued_card_instance()) is not None:
                         self.invoke_player_action(player, card_instance)
                         done = False
-                    if (pending_vote := player.get_pending_cancel_vote()) is not None:
+                    if ((pending_vote := player.get_pending_cancel_vote()) is not None) and CANCELLING_ALLOW_POLL:
                         self.invoke_vote(player, pending_vote)
                         done = False
                     # TODO see if you really need to update powers after each turn
@@ -83,6 +86,9 @@ class GameRunner(ABC):
     def do_round(self, drawing_player: Player, full_round: FullRound):
         """Performs a round in `game` with `drawing_player` drawing a card"""
         flag = self.finish_round(drawing_player)  # Finish any older rounds
+        # -- this checks to see if this player has any already queued card instance
+        # if yes, then they will get a turn and the game will wait till that player takes an action with it
+        # this card instance is assigned at the previous round when the below code runs
         if flag:
             with db:
                 card_instance = self.game.draw(drawing_player, full_round=full_round)
@@ -109,6 +115,7 @@ class GameRunner(ABC):
                 full_round = FullRound.create(game=self.game)
                 players = [player for player in self.players]
                 ordered_players = sorted(players, key=lambda player: player.sequence)
+                
             for player in ordered_players:
                 # Re fetch the player once
                 player = self.players.select().where(Player.id_ == player.id_).first()
