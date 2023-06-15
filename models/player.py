@@ -341,6 +341,19 @@ class Player(InGameModel):
             )
             if player:
                 Score.inc_clout(player, -1)
+            else:
+                pass 
+                
+        else: 
+            # Deduct point of the player who marked the card fake incorrectly
+            player = (
+                Player.select()
+                .where(Player.id_ == card_instance.player_id)
+                .first()
+            )
+            if player:
+                Score.inc_clout(player, -1)
+        
 
         # Discard all instanes of this (fake) card going around WITHOUT affecting the SCORE
         from .card_queue import PlayerCardQueue
