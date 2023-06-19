@@ -212,7 +212,7 @@ class Player(InGameModel):
         card_affinity = card_instance.card.affinity_towards
         card_affinity_count = card_instance.card.affinity_count
         if card_affinity is not None:
-            Score.inc_affinity(self, card_affinity, card_affinity_count)
+            Score.inc_affinity(self, card_affinity, str(card_affinity_count))
 
         return {
             "passed_to": model_to_dict(to_player),
@@ -281,7 +281,7 @@ class Player(InGameModel):
 
         if not self.has_initiate_cancel(topic=topic):
             raise NotAllowed("Cannot use this topic for initiating cancel")
-
+        Score.inc_affinity(player=self, affinity=topic, inc="penalty")
         player = self.game.player_set.where(Player.id_ == against).first()
         if not player:
             raise NotFound(f"Player does not exist {against}")
@@ -570,15 +570,40 @@ class Score(InGameModel):
         )
 
     @classmethod
-    def inc_affinity(cls, player: Player, affinity: AffinityTopic, inc: int):
-        (
-            Score.update({Score.value: Score.value + inc})
-            .where(Score.game == player.game)
-            .where(Score.player == player)
-            .where(Score.target == affinity.id_)
-            .where(Score.type == ScoreType.AFFINITY.value)
-            .execute()
-        )
+    def inc_affinity(cls, player: Player, affinity: AffinityTopic, inc: str):
+        current_affinity = player.affinity(towards=affinity)
+        
+        if inc == "penalty":
+            if current_affinity > 0:
+                (
+                    Score.update({Score.value: Score.value - 1})
+                    .where(Score.game == player.game)
+                    .where(Score.player == player)
+                    .where(Score.target == affinity.id_)
+                    .where(Score.type == ScoreType.AFFINITY.value)
+                    .execute()
+                )
+            else:
+                (
+                    Score.update({Score.value: Score.value + 1})
+                    .where(Score.game == player.game)
+                    .where(Score.player == player)
+                    .where(Score.target == affinity.id_)
+                    .where(Score.type == ScoreType.AFFINITY.value)
+                    .execute()
+                )
+
+        
+        else: 
+
+            (
+                Score.update({Score.value: Score.value + int(inc)})
+                .where(Score.game == player.game)
+                .where(Score.player == player)
+                .where(Score.target == affinity.id_)
+                .where(Score.type == ScoreType.AFFINITY.value)
+                .execute()
+            )
 
     @classmethod
     def inc_clout(cls, player: Player, inc: int):
