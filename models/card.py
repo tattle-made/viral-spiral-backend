@@ -60,7 +60,6 @@ class Card(InGameModel):
     storyline = peewee.CharField(default="none")
     storyline_index = peewee.IntegerField(default=0)
 
-
     image = peewee.FixedCharField(default="", max_length=50)  # image url
 
     def to_dict(self, **kwargs):
@@ -150,7 +149,8 @@ class CardInstance(InGameModel):
     STATUS_HOLDING = "holding"
 
     card = peewee.ForeignKeyField(Card)
-    from_ = peewee.ForeignKeyField("self", null=True, unique=False, backref="to_")
+    from_ = peewee.ForeignKeyField(
+        "self", null=True, unique=False, backref="to_")
     player = peewee.ForeignKeyField(
         Player, null=False, unique=False, backref="card_instances"
     )
@@ -182,36 +182,39 @@ class CardInstance(InGameModel):
         if not (start_index and end_index):
             return
 
-        variable = self.card.description[start_index + 1 : end_index]
+        variable = self.card.description[start_index + 1: end_index]
         variable = variable.lower().strip()
 
         if "other community" in variable or "Other community" in variable:
-            color = self.game.color_set.where(Color.id_ != self.player.color_id).first()
+            color = self.game.color_set.where(
+                Color.id_ != self.player.color_id).first()
             self.card.description = (
                 self.card.description[:start_index]
                 + color.name
-                + self.card.description[end_index + 1 :]
+                + self.card.description[end_index + 1:]
             )
             self.bias_against = color
             self.card.save()
             return color
         elif "oppressed community" in variable or "Oppressed community" in variable:
             # TODO selec an oppressed community
-            color = self.game.color_set.where(Color.id_ != self.player.color_id).first()
+            color = self.game.color_set.where(
+                Color.id_ != self.player.color_id).first()
             self.card.description = (
                 self.card.description[:start_index]
                 + color.name
-                + self.card.description[end_index + 1 :]
+                + self.card.description[end_index + 1:]
             )
             self.bias_against = color
             self.card.save()
             return color
         elif "dominant community" in variable or "Dominant community" in variable:
-            color = self.game.color_set.where(Color.id_ != self.player.color_id).first()
+            color = self.game.color_set.where(
+                Color.id_ != self.player.color_id).first()
             self.card.description = (
                 self.card.description[:start_index]
                 + color.name
-                + self.card.description[end_index + 1 :]
+                + self.card.description[end_index + 1:]
             )
             self.bias_against = color
             self.card.save()

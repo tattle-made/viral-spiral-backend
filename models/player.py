@@ -105,6 +105,7 @@ class Player(InGameModel):
         """Remove this card from the queue"""
         from .card_queue import PlayerCardQueue
         from .card import CardInstance
+        from .playerhand import PlayerHand
 
         card_instance = self.card_instances.where(
             CardInstance.id_ == card_instance_id
@@ -132,6 +133,9 @@ class Player(InGameModel):
         ):
             original_player = Player.select().where(Player.id_ == self.id_).first()
             Score.inc_clout(original_player, -1)
+
+        PlayerHand.create(game=card_instance.card.game,
+                          player=self.id_, card_instance=card_instance)
 
         return model_to_dict(card_instance)
 
@@ -315,7 +319,8 @@ class Player(InGameModel):
         if not card_instance:
             raise NotFound(f"Card instance not found {card_instance_id}")
 
-        fake_card = card_instance.card.fakes.where(Card.id_ == fake_card_id).first()
+        fake_card = card_instance.card.fakes.where(
+            Card.id_ == fake_card_id).first()
         if not fake_card:
             raise NotFound(f"Fake card not found {fake_card_id}")
 
@@ -342,9 +347,9 @@ class Player(InGameModel):
             if player:
                 Score.inc_clout(player, -1)
             else:
-                pass 
-                
-        else: 
+                pass
+
+        else:
             # Deduct point of the player who marked the card fake incorrectly
             player = (
                 Player.select()
@@ -353,7 +358,6 @@ class Player(InGameModel):
             )
             if player:
                 Score.inc_clout(player, -1)
-        
 
         # Discard all instanes of this (fake) card going around WITHOUT affecting the SCORE
         from .card_queue import PlayerCardQueue
@@ -504,7 +508,8 @@ class Player(InGameModel):
                 viral_spiral_bias_check = True
                 break
         has_viral_spiral = viral_spiral_affinity_check and viral_spiral_bias_check
-        PlayerPower.update(name=VIRAL_SPIRAL, player=self, active=has_viral_spiral)
+        PlayerPower.update(name=VIRAL_SPIRAL, player=self,
+                           active=has_viral_spiral)
 
         # Cancel
         has_cancel = self.has_initiate_cancel()
