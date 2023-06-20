@@ -185,7 +185,7 @@ class CardInstance(InGameModel):
         variable = self.card.description[start_index + 1: end_index]
         variable = variable.lower().strip()
 
-        if "other community" in variable or "Other community" in variable:
+        if "other community" in variable or "Other community" in variable or "other community-" in variable or "(other community)-" in variable or "Other community-" in variable or "(Other community)-" in variable:
             color = self.game.color_set.where(
                 Color.id_ != self.player.color_id).first()
             self.card.description = (
@@ -196,7 +196,7 @@ class CardInstance(InGameModel):
             self.bias_against = color
             self.card.save()
             return color
-        elif "oppressed community" in variable or "Oppressed community" in variable:
+        elif "oppressed community" in variable or "Oppressed community" in variable or "oppressed community-" in variable or "(oppressed community)-" in variable or "Oppressed community-" in variable or "(Oppressed community)-" in variable:
             # TODO selec an oppressed community
             color = self.game.color_set.where(
                 Color.id_ != self.player.color_id).first()
@@ -208,7 +208,7 @@ class CardInstance(InGameModel):
             self.bias_against = color
             self.card.save()
             return color
-        elif "dominant community" in variable or "Dominant community" in variable:
+        elif "dominant community" in variable or "Dominant community" in variable or "dominant community-" in variable or "(dominant community)-" in variable or "Dominant community-" in variable or "(Dominant community)-" in variable:
             color = self.game.color_set.where(
                 Color.id_ != self.player.color_id).first()
             self.card.description = (
