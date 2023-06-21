@@ -196,6 +196,7 @@ class CardInstance(InGameModel):
                 + self.card.description[end_index + 1:]
             )
             self.bias_against = color
+            self.card.bias_against = color
             self.card.save()
             return color
         elif "oppressed community" in variable or "Oppressed community" in variable or "oppressed community-" in variable or "(oppressed community)-" in variable or "Oppressed community-" in variable or "(Oppressed community)-" in variable:
@@ -210,6 +211,7 @@ class CardInstance(InGameModel):
                 + self.card.description[end_index + 1:]
             )
             self.bias_against = color
+            self.card.bias_against = color
             self.card.save()
             return color
         elif "dominant community" in variable or "Dominant community" in variable or "dominant community-" in variable or "(dominant community)-" in variable or "Dominant community-" in variable or "(Dominant community)-" in variable:
@@ -223,6 +225,7 @@ class CardInstance(InGameModel):
                 + self.card.description[end_index + 1:]
             )
             self.bias_against = color
+            self.card.bias_against = color
             self.card.save()
             return color
 
