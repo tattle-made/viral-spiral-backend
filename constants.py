@@ -10,19 +10,19 @@ VIRAL_SPIRAL_BIAS_COUNT = 5
 
 # If the affinity towards any topic reaches 3, the player receives the
 # cancel power
-CANCELLING_AFFINITY_COUNT = 2
+CANCELLING_AFFINITY_COUNT = 3
 # if true, cancel has the polling mechanic
 CANCELLING_ALLOW_POLL = False
 # If True, all players will be asked to vote instead of just the affinity
 CANCEL_VOTE_ALL_PLAYERS = False
 
 # If bias against any topic reaches 3, the player receives the fake news power
-FAKE_NEWS_BIAS_COUNT = 2
+FAKE_NEWS_BIAS_COUNT = 3
 
 ACTIVE_STR = "active"
 
 # If a player reaches a number of points, they win and the game ends
-PLAYER_WIN_SCORE = 7  # changed for a quicker game
+PLAYER_WIN_SCORE = 15
 # If the TBG reaches a number of points, the game ends
 TGB_END_SCORE = 15
 
