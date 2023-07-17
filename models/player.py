@@ -98,6 +98,7 @@ class Player(InGameModel):
         """Remove this card from the queue"""
         from .card_queue import PlayerCardQueue
         from .card import CardInstance
+        from .playerhand import PlayerHand
 
         card_instance = self.card_instances.where(
             CardInstance.id_ == card_instance_id
@@ -128,6 +129,8 @@ class Player(InGameModel):
         ):
             original_player = Player.select().where(Player.id_ == self.id_).first()
             Score.inc_clout(original_player, -1)
+
+        PlayerHand.create(player=self.id_, card_instance=card_instance)
 
         return model_to_dict(card_instance)
 
