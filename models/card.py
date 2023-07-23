@@ -91,6 +91,25 @@ class Card(InGameModel):
         player.event_receive_card(card_instance)
         return card_instance
 
+    def draw_card_from_hand(self, player: Player):
+        """Creates a card instance from a previously drawn card
+        This function is used during viral spiral power.
+        When a Player chooses to deploy the viral spiral power, they get to choose a card from their hand and send it to multiple players.
+        The card instance in their hand will already be part of a turn and several constraints will apply to it :
+            - who the card can be passed to
+            - who the card has already been passed to
+        These constraints might be undesirable or irrelevant in the context of the viral spiral power. When a player selects a card to share with other players
+        during this power, they can share it with every other player. So in a way this is the equivalent of drawing a new card.
+        This new function mostly repeats the functions from the `draw` function but avoids
+        """
+        card_instance = CardInstance.create(
+            card=self,
+            from_=None,
+            player=player,
+            game=self.game,
+        )
+        return card_instance
+
     @classmethod
     def create_from_dict(cls, dict_, defaults=None):
         defaults = defaults or {}

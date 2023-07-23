@@ -6,6 +6,7 @@ from .counters import AffinityTopic, Color
 from .powers import PlayerPower, CancelStatus, CancelVote
 from .card_queue import PlayerCardQueue
 from .encyclopedia import Article
+from .playerhand import PlayerHand
 
 ALL_MODELS = [
     # This is the order in which the tables will be created
@@ -24,4 +25,5 @@ ALL_MODELS = [
     Card,
     CardInstance,
     PlayerCardQueue,
+    PlayerHand,
 ]

@@ -129,7 +129,7 @@ def main():
 
         for player in ordered_players:
             print("------START OF ROUND-------", i)
-            sleep(1)
+            sleep(5)
             game.add_round(full_round=full_round)
             Player.update(current=False).where(Player.game == game).execute()
             Player.update(sequence=Player.sequence + 100, current=True).where(
@@ -144,6 +144,7 @@ def main():
             print("starting %s's round" % (player.name))
             print("card is in %s's hand" % (card_holder.name))
             for other in others:
+                sleep(5)
                 should_keep = True if random() < 0.4 else False
                 if should_keep:
                     print(
@@ -179,6 +180,8 @@ def main():
     return (game, adhiraj, aman, farah, krys)
     # return (game, players, adhiraj, aman, farah, krys, ordered_players, current_player)
 
+
+main()
 
 """
 todo : 

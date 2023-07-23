@@ -130,7 +130,7 @@ class Player(InGameModel):
             original_player = Player.select().where(Player.id_ == self.id_).first()
             Score.inc_clout(original_player, -1)
 
-        PlayerHand.create(player=self.id_, card_instance=card_instance)
+        PlayerHand.create(game=self.game, player=self.id_, card_instance=card_instance)
 
         return model_to_dict(card_instance)
 
@@ -258,9 +258,10 @@ class Player(InGameModel):
             )
 
         # Dequeue this card
-        from .card_queue import PlayerCardQueue
-
-        PlayerCardQueue.dequeue(card_instance)
+        # from .card_queue import PlayerCardQueue
+        # this might actually not be needed since this card that is being sent to players
+        # was already "kept" hence dequeued
+        # PlayerCardQueue.dequeue(card_instance)
 
         return {"passed_to": [model_to_dict(player) for player in recipients]}
 
