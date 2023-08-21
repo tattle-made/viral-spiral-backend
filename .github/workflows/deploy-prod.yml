@@ -38,7 +38,7 @@ jobs:
           version: v1.21.0
           command: rollout status deployment/vs-rest
       - name: Notify on Slack
-        uses: rtCamp/action-slack-notify@v2.0.0
+        uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
           SLACK_MESSAGE: "Deployed Viral Spiral backend to production environment"
