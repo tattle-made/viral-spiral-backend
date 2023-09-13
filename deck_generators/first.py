@@ -12,6 +12,7 @@ from exceptions import OutOfCards
 from models import Card, Player
 import random
 from constants import TGB_END_SCORE
+from peewee import fn
 
 
 def _draw_true_cards(player: Player):

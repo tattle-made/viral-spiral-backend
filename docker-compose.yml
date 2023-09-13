@@ -41,7 +41,7 @@ services:
       - PYTHONPATH=./
       - DB_HOST=sql
       - DB_PORT=3306
-      - DB_NAME=tattleviralspiral
+      - DB_NAME=tattleviralspiral2
       - DB_USERNAME=root
       - DEBUG=yes
       - DB_PASSWORD=helloworld

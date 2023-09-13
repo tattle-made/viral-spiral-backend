@@ -176,13 +176,31 @@ class Game(Model):
     @classmethod
     def new_name(cls):
         """Returns a new name for a new game"""
-        verbs = ["obnoxious", "odd", "fun", "smart", "lazy"]
+        verbs = ["ambitious", "basic", "careful", "dark", "eager","fab","glib","happy","inept","jolly","keen","lavish","magic","neat","official","perfect","quack","rare","sassy","tall","velvet","weak"]
         nouns = [
-            "cow",
-            "dog",
+            "apple",
+            "ball",
             "cat",
-            "banana",
-            "router",
+            "dog",
+            "eel",
+            "fish",
+            "goat",
+            "hen",
+            "island",
+            "joker",
+            "lion",
+            "monk",
+            "nose",
+            "oven",
+            "parrot",
+            "queen",
+            "rat",
+            "sun",
+            "tower",
+            "umbrella",
+            "venus",
+            "water",
+            "zebra"
         ]
         number = "%04d" % random.randint(0, 9999)
         name = f"{random.choice(verbs)}-{random.choice(nouns)}-{number}"
