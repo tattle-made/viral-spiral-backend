@@ -222,7 +222,7 @@ class CardInstance(InGameModel):
         if variable=="other community":
             color = self.game.color_set.where(
                 Color.id_ != self.player.color_id
-                ).first()
+                ).where(Color.name!="yellow").first()
             self.card.description = (
                 self.card.description[:start_index]
                 + color.name
@@ -236,7 +236,7 @@ class CardInstance(InGameModel):
             # TODO selec an oppressed community
             color = self.game.color_set.where(
                 Color.id_ != self.player.color_id
-                ).first()
+                ).where(Color.name!="yellow").first()
             self.card.description = (
                 self.card.description[:start_index]
                 + color.name
@@ -249,7 +249,7 @@ class CardInstance(InGameModel):
         elif variable == "dominant community":
             color = self.game.color_set.where(
                 Color.id_ != self.player.color_id
-                ).first()
+                ).where(Color.name!="yellow").first()
             self.card.description = (
                 self.card.description[:start_index]
                 + color.name

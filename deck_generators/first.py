@@ -15,6 +15,7 @@ from constants import TGB_END_SCORE
 from peewee import fn
 
 
+
 def _draw_true_cards(player: Player):
     """
     Test function only to be used during debugging and testing.
@@ -29,6 +30,7 @@ def _draw_true_cards(player: Player):
         .where(Card.affinity_towards != None)
         .where(Card.fake == False)
         .where(Card.tgb <= tgb)
+        .order_by(fn.Rand())
         .first()
     )
 
@@ -48,7 +50,9 @@ def draw(player: Player):
             .where(Card.original_player == None)
             .where(Card.bias_against != None)
             .where(Card.bias_against != player.color)
+            .where(Card.bias_against.name != 'yellow')
             .where(Card.tgb <= tgb + 2)
+            .order_by(fn.Rand())
             .first()
         )
 
@@ -69,6 +73,7 @@ def draw(player: Player):
                     .where(Card.fake == True)
                     .where(Card.faked_by == None)
                     .where(Card.tgb <= tgb)
+                    .order_by(fn.Rand())
                     .first()
                 )
             if should_draw_topical:
@@ -81,6 +86,7 @@ def draw(player: Player):
                     .where(Card.fake == True)
                     .where(Card.faked_by == None)
                     .where(Card.tgb <= tgb)
+                    .order_by(fn.Rand())
                     .first()
                 )
         else:
@@ -93,6 +99,7 @@ def draw(player: Player):
                     .where(Card.affinity_towards != None)
                     .where(Card.fake == False)
                     .where(Card.tgb <= tgb)
+                    .order_by(fn.Rand())
                     .first()
                 )
             if should_draw_topical:
@@ -104,6 +111,7 @@ def draw(player: Player):
                     .where(Card.bias_against == None)
                     .where(Card.fake == False)
                     .where(Card.tgb <= tgb)
+                    .order_by(fn.Rand())
                     .first()
                 )
 
@@ -113,6 +121,7 @@ def draw(player: Player):
             .where(Card.game == player.game)
             .where(Card.original_player == None)
             .where(Card.tgb <= tgb)
+            .order_by(fn.Rand())
             .first()
         )
     return card.draw(player)
