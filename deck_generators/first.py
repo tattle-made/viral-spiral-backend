@@ -43,15 +43,16 @@ def draw(player: Player):
 
     bias_p = random.uniform(0, 1)
 
-    if bias_p <= 0.5:
+    if bias_p <= 0.4:
         # draw a bias card
+        yellow = [color for color in player.game.color_set if color.name=='yellow'][0]
         card = (
             Card.select()
             .where(Card.game == player.game)
             .where(Card.original_player == None)
             .where(Card.bias_against != None)
             .where(Card.bias_against != player.color)
-            .where(Card.bias_against.name != 'yellow')
+            .where(Card.bias_against != yellow)
             .where(Card.tgb <= tgb + 2)
             .order_by(fn.Rand())
             .first()
