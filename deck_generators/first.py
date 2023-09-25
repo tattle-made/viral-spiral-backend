@@ -42,7 +42,7 @@ def draw(player: Player):
 
     bias_p = random.uniform(0, 1)
 
-    if bias_p <= 0.2:
+    if bias_p <= 0.5:
         # draw a bias card
         card = (
             Card.select()
