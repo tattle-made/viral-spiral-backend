@@ -43,7 +43,7 @@ def draw(player: Player):
 
     bias_p = random.uniform(0, 1)
 
-    if bias_p <= 0.4:
+    if bias_p <= 0.3:
         # draw a bias card
         yellow = [color for color in player.game.color_set if color.name=='yellow'][0]
         card = (
