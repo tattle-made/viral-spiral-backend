@@ -30,6 +30,7 @@ def _draw_true_cards(player: Player):
         .where(Card.affinity_towards != None)
         .where(Card.fake == False)
         .where(Card.tgb <= tgb)
+        .where(Card.bias_against.name != 'yellow')
         .order_by(fn.Rand())
         .first()
     )
