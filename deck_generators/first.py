@@ -43,9 +43,11 @@ def draw(player: Player):
 
     bias_p = random.uniform(0, 1)
 
-    if bias_p <= 0.3:
+    # temporary code to exclude drawing anti yellow card
+    yellow = [color for color in player.game.color_set if color.name=='yellow'][0]
+
+    if bias_p <= 0.1:
         # draw a bias card
-        yellow = [color for color in player.game.color_set if color.name=='yellow'][0]
         card = (
             Card.select()
             .where(Card.game == player.game)
@@ -75,6 +77,7 @@ def draw(player: Player):
                     .where(Card.fake == True)
                     .where(Card.faked_by == None)
                     .where(Card.tgb <= tgb)
+                    .where(Card.bias_against != yellow)
                     .order_by(fn.Rand())
                     .first()
                 )
@@ -101,6 +104,7 @@ def draw(player: Player):
                     .where(Card.affinity_towards != None)
                     .where(Card.fake == False)
                     .where(Card.tgb <= tgb)
+                    .where(Card.bias_against != yellow)
                     .order_by(fn.Rand())
                     .first()
                 )
@@ -123,6 +127,7 @@ def draw(player: Player):
             .where(Card.game == player.game)
             .where(Card.original_player == None)
             .where(Card.tgb <= tgb)
+            .where(Card.bias_against != yellow)
             .order_by(fn.Rand())
             .first()
         )
