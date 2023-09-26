@@ -243,7 +243,9 @@ class Game(Model):
         with open(topics_filepath, "r") as topics_file:
             all_topic_objs = json.load(topics_file)
 
-        selected_topic_objs = random.choices(all_topic_objs, k=NUM_AFFINITY_TOPICS)
+        # selected_topic_objs = random.choices(all_topic_objs, k=NUM_AFFINITY_TOPICS)
+        selected_topic_objs = random.sample(all_topic_objs, k=NUM_AFFINITY_TOPICS)
+
         for topic_name in selected_topic_objs:
             topic_objs.append(AffinityTopic.create(name=topic_name, game=game))
 
