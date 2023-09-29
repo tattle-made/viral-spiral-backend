@@ -519,7 +519,7 @@ class Player(InGameModel):
             if abs(self.bias(against=color)) >= VIRAL_SPIRAL_BIAS_COUNT:
                 viral_spiral_bias_check = True
                 break
-        has_viral_spiral = viral_spiral_affinity_check and viral_spiral_bias_check
+        has_viral_spiral = viral_spiral_affinity_check or viral_spiral_bias_check
         PlayerPower.update(name=VIRAL_SPIRAL, player=self, active=has_viral_spiral)
 
         # Cancel

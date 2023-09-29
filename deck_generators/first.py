@@ -47,7 +47,7 @@ def draw(player: Player):
     yellow = [color for color in player.game.color_set if color.name=='yellow'][0]
 
     print('drawing card')
-    if bias_p <= 0.1:
+    if bias_p <= 0.3:
         print('drawing a bias card')
         # draw a bias card
         card = (
