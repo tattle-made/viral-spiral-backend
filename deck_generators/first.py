@@ -46,7 +46,7 @@ def draw(player: Player):
     # temporary code to exclude drawing anti yellow card
     yellow = [color for color in player.game.color_set if color.name=='yellow'][0]
 
-    if bias_p <= 0.1:
+    if bias_p <= 0.3:
         # draw a bias card
         card = (
             Card.select()
@@ -128,6 +128,7 @@ def draw(player: Player):
             .where(Card.original_player == None)
             .where(Card.tgb <= tgb)
             .where(Card.bias_against != yellow)
+            .where(Card.bias_against == None)
             .order_by(fn.Rand())
             .first()
         )

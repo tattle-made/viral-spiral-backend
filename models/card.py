@@ -5,6 +5,7 @@ from playhouse.shortcuts import model_to_dict as mtd_original
 from .base import InGameModel
 from .player import Player
 from .counters import AffinityTopic, Color
+from peewee import fn
 
 
 class Card(InGameModel):
@@ -222,7 +223,7 @@ class CardInstance(InGameModel):
         if variable=="other community":
             color = self.game.color_set.where(
                 Color.id_ != self.player.color_id
-                ).where(Color.name!="yellow").first()
+                ).where(Color.name!="yellow").order_by(fn.Rand()).first()
             self.card.description = (
                 self.card.description[:start_index]
                 + color.name
@@ -236,7 +237,7 @@ class CardInstance(InGameModel):
             # TODO selec an oppressed community
             color = self.game.color_set.where(
                 Color.id_ != self.player.color_id
-                ).where(Color.name!="yellow").first()
+                ).where(Color.name!="yellow").order_by(fn.Rand()).first()
             self.card.description = (
                 self.card.description[:start_index]
                 + color.name
@@ -249,7 +250,7 @@ class CardInstance(InGameModel):
         elif variable == "dominant community":
             color = self.game.color_set.where(
                 Color.id_ != self.player.color_id
-                ).where(Color.name!="yellow").first()
+                ).where(Color.name!="yellow").order_by(fn.Rand()).first()
             self.card.description = (
                 self.card.description[:start_index]
                 + color.name
