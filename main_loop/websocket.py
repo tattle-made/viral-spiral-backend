@@ -136,6 +136,10 @@ class WebsocketGameRunner(GameRunner):
             },
             event="play_card",
         )
+        
+        others = [all_player for all_player in player.game.player_set if all_player!=player] 
+        for player in others:
+            self.send_to_player(player, {"card_instance":model_to_dict(card_instance)}, event="show_card")
         # self.send_to_game(self.game, {"player_name": player.name}, event="whos_turn")
 
     def invoke_vote(self, player: Player, pending_vote: CancelVote):
@@ -292,6 +296,31 @@ def about_game(message):
         }
     else:
         return {"status": 404, "error": f"Game not found {game_name}"}
+    
+@socketio.event
+def metadata_cancel(message):
+    """Returns info about a game"""
+    logging.info(
+        f"Incoming event - {inspect.getframeinfo(inspect.currentframe()).function} |"
+        f" {message}"
+    )
+    
+    game_name = message["game"]
+    player_name = message["player"]
+
+    runner = WebsocketGameRunner.get_by_name(game_name)
+    if runner:
+        player = runner.game.get_player_by_name(player_name)
+        topics = player.valid_topics_for_cancel()
+
+        return {
+            "status": 200,
+            "cancel_metadata": {
+                "topics" : model_to_dict(topics)
+            },
+        }
+    else:
+        return {"status": 404, "error": f"Cancel Metadata not found {game_name}"}
 
 
 @socketio.event
