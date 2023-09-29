@@ -46,7 +46,9 @@ def draw(player: Player):
     # temporary code to exclude drawing anti yellow card
     yellow = [color for color in player.game.color_set if color.name=='yellow'][0]
 
+    print('drawing card')
     if bias_p <= 0.1:
+        print('drawing a bias card')
         # draw a bias card
         card = (
             Card.select()
@@ -68,7 +70,9 @@ def draw(player: Player):
 
         if fake_p < (tgb / TGB_END_SCORE):
             # draw FAKE card
+            print('drawing a fake card')
             if should_draw_affinity:
+                print('drawing a fake affinity')
                 card = (
                     Card.select()
                     .where(Card.game == player.game)
@@ -77,11 +81,11 @@ def draw(player: Player):
                     .where(Card.fake == True)
                     .where(Card.faked_by == None)
                     .where(Card.tgb <= tgb)
-                    .where(Card.bias_against != yellow)
                     .order_by(fn.Rand())
                     .first()
                 )
             if should_draw_topical:
+                print('drawing a fake topical card')
                 card = (
                     Card.select()
                     .where(Card.game == player.game)
@@ -104,7 +108,6 @@ def draw(player: Player):
                     .where(Card.affinity_towards != None)
                     .where(Card.fake == False)
                     .where(Card.tgb <= tgb)
-                    .where(Card.bias_against != yellow)
                     .order_by(fn.Rand())
                     .first()
                 )
