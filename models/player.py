@@ -186,7 +186,7 @@ class Player(InGameModel):
 
         # Trigger the receive card events
         # Will raise an exception if cannot create
-        print(card_instance.card, card_instance, to_player, self.game)
+        # print(card_instance.card, card_instance, to_player, self.game)
 
         to_card_instance = CardInstance.create(
             card=card_instance.card,
