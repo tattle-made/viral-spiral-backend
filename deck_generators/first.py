@@ -9,7 +9,7 @@ For the remaining 0.75, we have two choices :
 
 
 from exceptions import OutOfCards
-from models import Card, Player
+from models import Card, Player, Score
 import random
 from constants import TGB_END_SCORE
 from peewee import fn
@@ -125,12 +125,17 @@ def _select(player: Player):
         tgb = player.game.total_global_bias()
 
         bias_p = random.uniform(0, 1)
+        player_count_with_clout_more_than_two = len(
+            [x for x in filter(lambda scores: scores['score']>2, 
+            [Score.all_scores_for_client(player.score_set) for player in player.game.player_set])])
+        shoud_draw_bias = bias_p < 0.3 and player_count_with_clout_more_than_two >= 1
+
 
         # temporary code to exclude drawing anti yellow card
         yellow = [color for color in player.game.color_set if color.name=='yellow'][0]
 
         print('\t\tdrawing card')
-        if bias_p <= 0.5:
+        if shoud_draw_bias:
             print('\t\t\tdrawing a bias card')
             # draw a bias card
             (_, card) = select_bias_card(player, tgb, yellow)
@@ -138,7 +143,6 @@ def _select(player: Player):
         else:
             print('\t\t\tdrawing a unbiased card')
             # draw AFFINITY or TOPICAL card
-            fake_p = random.uniform(0, 1)
             should_draw_affinity = random.uniform(0, 1) < 0.5
             should_draw_topical = not should_draw_affinity
             should_draw_true = random.uniform(0,1) < (1-(tgb/TGB_END_SCORE))
@@ -177,7 +181,7 @@ def select(player: Player):
         tgb = player.game.total_global_bias()
 
         bias_p = random.uniform(0, 1)
-
+        
         # temporary code to exclude drawing anti yellow card
         yellow = [color for color in player.game.color_set if color.name=='yellow'][0]
 
@@ -215,13 +219,14 @@ def select(player: Player):
                 if should_draw_topical:
                     print('\t\t\t\t\tdrawing a true topical card')
                     (count, card) = select_true_topical_card(player, tgb, yellow)
-                    print(count)
+                    while count > 0 and not card:
+                        (count, card) = select_true_topical_card(player, tgb, yellow)
                     if not card:
-                        (_, card) = select_bias_card(player, tgb, yellow)
+                        (_, card) = select_true_affinity_card(player, tgb, yellow)
     
     return card
 
 def draw(player: Player):
-    card = select(player)
+    card = _select(player)
     return card.draw(player)
 
