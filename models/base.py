@@ -123,6 +123,9 @@ class Game(Model):
 
         if self.total_global_bias() >= TGB_END_SCORE:
             return False
+        
+        if self.ended == True:
+            return False
 
         return True
 
